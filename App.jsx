@@ -423,13 +423,16 @@ function Stars({ count }) {
 }
 
 // ── CRITERION ROW ─────────────────────────────────────────────────────────────
-function CriterionRow({ criterion, compact }) {
+function CriterionRow({ criterion, compact, onHelp }) {
   const c = criterion
   if (!c) return null
   const color = c.pass ? T.green : c.pending ? T.muted : T.red
   return React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: compact ? '5px 0' : '8px 0', borderBottom: `1px solid ${T.border}` } },
-    React.createElement('div', null,
-      React.createElement('div', { style: { fontSize: compact ? 11 : 12, color: T.text, fontWeight: 600 } }, c.label),
+    React.createElement('div', { style: { flex: 1 } },
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+        React.createElement('div', { style: { fontSize: compact ? 11 : 12, color: T.text, fontWeight: 600 } }, c.label),
+        onHelp && React.createElement('button', { onClick: onHelp, style: { background: 'transparent', border: 'none', color: T.muted, fontSize: 11, cursor: 'pointer', padding: '0 4px' } }, '❓')
+      ),
       React.createElement('div', { style: { fontSize: 10, color: T.muted } }, `Target: ${c.target} ${c.unit}`)
     ),
     React.createElement('div', { style: { textAlign: 'right' } },
@@ -462,7 +465,7 @@ function MoatMeter({ moatType, strength }) {
 }
 
 // ── TOKEN SLIDER ──────────────────────────────────────────────────────────────
-function TokenSlider({ lever, value, onChange, remaining, disabled }) {
+function TokenSlider({ lever, value, onChange, remaining, disabled, onHelp }) {
   return React.createElement('div', { style: { marginBottom: 14 } },
     React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 } },
       React.createElement('div', null,
@@ -590,7 +593,632 @@ function QuarterResultsModal({ results, onContinue }) {
   )
 }
 
+
+// ── GLOSSARY & HELP CONTENT ───────────────────────────────────────────────────
+const GLOSSARY = {
+  revenue: {
+    term: "Revenue",
+    simple: "The total money your company earns from selling products or services before any costs are subtracted.",
+    example: "If you sell 100 products at ₦1,000 each, your revenue is ₦100,000.",
+    tip: "Spend tokens on Operations, Pricing, and Hiring to grow revenue.",
+    emoji: "💰"
+  },
+  grossProfit: {
+    term: "Gross Profit",
+    simple: "What's left from revenue after paying the direct cost of making your product (materials, production).",
+    example: "Revenue ₦100,000 minus production costs ₦60,000 = Gross Profit ₦40,000.",
+    tip: "Increase Pricing tokens to improve your gross profit margin.",
+    emoji: "📊"
+  },
+  fcfe: {
+    term: "FCFE (Free Cash Flow to Equity)",
+    simple: "The actual cash your company generates that belongs to you as the owner — after all expenses, investments, and debt payments.",
+    example: "Think of it as: after paying all your bills and reinvesting in the business, how much cash is left in your pocket?",
+    tip: "This is the most important number. Keep it positive and growing.",
+    emoji: "💵"
+  },
+  roe: {
+    term: "RoE (Return on Equity)",
+    simple: "How efficiently your company turns the money invested into it into profit. Must be 1.0x or higher from Year 2 onward.",
+    example: "RoE of 1.5x means for every ₦1 invested in the company, it earns ₦1.50 in profit.",
+    tip: "Balance token allocation — too much spending on hiring reduces RoE.",
+    emoji: "📈"
+  },
+  currentRatio: {
+    term: "Current Ratio",
+    simple: "Can your company pay its short-term bills? Measures liquid assets vs short-term debts. Must stay above 1.0x.",
+    example: "Current Ratio of 1.5x means you have ₦1.50 available for every ₦1.00 you owe short-term.",
+    tip: "Invest in Debt Management tokens to keep this healthy.",
+    emoji: "⚖️"
+  },
+  intrinsicValue: {
+    term: "Intrinsic Value",
+    simple: "What your company is truly worth based on its cash flows — not what the market says, but the real underlying value.",
+    example: "Like valuing a house by its rental income, not just what someone is willing to pay today.",
+    tip: "Intrinsic value must be 10-30% BELOW market price for criterion 7 to pass.",
+    emoji: "🏛️"
+  },
+  moat: {
+    term: "Economic Moat",
+    simple: "Your company's competitive advantage — what makes it hard for competitors to take your customers. Like a moat around a castle that keeps enemies out.",
+    example: "Apple's moat is Brand Loyalty. Google's moat is Network Effects. Walmart's moat is Cost Advantage.",
+    tip: "Invest in R&D/Moat tokens every quarter or your moat weakens and competitors attack!",
+    emoji: "🛡️"
+  },
+  tokens: {
+    term: "Decision Tokens",
+    simple: "Each quarter you get 20 tokens to spend across 6 areas of your business. You cannot spend more than 20 — this forces you to prioritise what matters most.",
+    example: "Like having ₦20,000 budget for your business: do you spend more on marketing or hiring?",
+    tip: "Never spend 0 tokens on R&D/Moat — your moat will decay and competitors will attack.",
+    emoji: "🎯"
+  },
+  ops: {
+    term: "Operations Investment",
+    simple: "Spending on making and delivering your product better and faster. Directly grows your revenue.",
+    example: "A restaurant investing in a bigger kitchen to serve more customers.",
+    tip: "Each token adds 6% revenue growth. Best lever for growing your top line.",
+    emoji: "⚙️"
+  },
+  rd: {
+    term: "R&D / Moat Spending",
+    simple: "Investing in research, innovation, and protecting your competitive advantage. Prevents your moat from weakening.",
+    example: "A phone company spending on new features so customers don't switch to competitors.",
+    tip: "NEVER skip this. Without R&D, your moat decays every quarter and competitors attack.",
+    emoji: "🔬"
+  },
+  hiring: {
+    term: "Hiring",
+    simple: "Growing your team to handle more business. Boosts revenue but also adds fixed payroll costs.",
+    example: "Hiring 5 new salespeople — they bring in more revenue but you must pay their salaries every month.",
+    tip: "Balance with pricing. Over-hiring without pricing power crushes your margins.",
+    emoji: "👥"
+  },
+  pricing: {
+    term: "Pricing Strategy",
+    simple: "Charging more for your product. Increases profit margin on each sale but can reduce volume.",
+    example: "A premium restaurant charges more per meal — fewer customers but higher profit per customer.",
+    tip: "Each token adds 4% gross margin. Great for improving profitability without growing costs.",
+    emoji: "💵"
+  },
+  debt: {
+    term: "Debt Management",
+    simple: "Managing your company's borrowing and financial obligations. Keeps your current ratio healthy and reduces financial risk.",
+    example: "Paying off loans on time so banks keep trusting you and your credit score stays high.",
+    tip: "Keep at least 4 tokens here to maintain a healthy current ratio above 1.0x.",
+    emoji: "🏦"
+  },
+  dividend: {
+    term: "Dividend / Retain Earnings",
+    simple: "Deciding whether to pay profits back to investors (dividend) or keep them in the company to fund growth (retain).",
+    example: "Retaining earnings is like saving money to expand your shop next year instead of spending it today.",
+    tip: "Retaining earnings grows your equity and improves RoE. Dividends boost market hype short-term.",
+    emoji: "📈"
+  },
+};
+
+const PHASE_GUIDES = {
+  Foundation: {
+    title: "📚 Foundation Phase (Q1-Q4)",
+    subtitle: "Years 1 — Build Your Base",
+    color: "#00E5FF",
+    guide: "This is your learning phase. Losses are acceptable — focus on establishing your moat and building your team. Don't worry about profits yet.",
+    priorities: ["Invest heavily in R&D/Moat (3-4 tokens) to build your competitive advantage", "Spend on Operations to grow revenue", "Keep Debt Management at 4+ to maintain healthy current ratio", "Avoid over-hiring — payroll costs hurt your cash flow early on"],
+    warning: "If your moat falls below its crisis level in Year 1, you'll spend the entire game recovering."
+  },
+  Traction: {
+    title: "📈 Traction Phase (Q5-Q8)",
+    subtitle: "Year 2 — Consistency Clock Starts!",
+    color: "#FFD700",
+    guide: "The consistency clock has started! Revenue, profit, and cash flow must now grow consistently. RoE must reach 1.0x and stay there.",
+    priorities: ["RoE must hit 1.0x this year — prioritise Pricing and manage Hiring costs", "Revenue must grow quarter-on-quarter — keep Operations investment steady", "Maintain moat strength above crisis threshold at all costs", "Start building retained earnings for equity growth"],
+    warning: "Missing RoE targets in Q5-Q8 counts against you in the final assessment."
+  },
+  Defence: {
+    title: "🛡️ Defence Phase (Q9-Q12)",
+    subtitle: "Year 3 — Protect What You Built",
+    color: "#A78BFA",
+    guide: "Competitors are watching your growth. This phase is about defending your moat from attacks while keeping all metrics on track.",
+    priorities: ["Never drop R&D/Moat below 2 tokens — competitors attack weakened moats", "Current ratio must stay above 1.0x every quarter", "Keep profit growing — two consecutive profit drops hurt your final score", "Watch for competitor attack patterns — anticipate strikes"],
+    warning: "A crisis event in Year 3 can set you back 2-3 quarters. Keep moat strong."
+  },
+  Dominance: {
+    title: "👑 Dominance Phase (Q13-Q16)",
+    subtitle: "Year 4 — All Metrics Must Converge",
+    color: "#FF6B9D",
+    guide: "All 7 criteria must be approaching their targets. This is the most intense phase — competitors escalate attacks and crises become more frequent.",
+    priorities: ["Check your 7-criteria scorecard every quarter — fix any failing metric immediately", "Intrinsic value must be 10-30% below market price — adjust R&D and pricing tokens", "Protect moat at all costs — a crisis now is very hard to recover from", "IPO readiness screen unlocks this phase — check your projected score"],
+    warning: "Three failing criteria at Q16 makes winning at Q20 nearly impossible."
+  },
+  "IPO Window": {
+    title: "🏆 IPO Window (Q17-Q20)",
+    subtitle: "Year 5 — Final Push",
+    color: "#00FF88",
+    guide: "Final stretch! All 7 criteria are assessed at Q20. Stay consistent, don't take risks, and keep every metric above its target.",
+    priorities: ["Do NOT experiment with tokens — stick to what's been working", "All 7 criteria must be passing by Q19 at the latest", "Maintain moat strength above 50 for the moat criterion to pass", "Intrinsic value discount must be 10-30% — check the scorecard tab"],
+    warning: "An early IPO (before Q20) locks your valuation now. Only call it if all 7 criteria are already passing."
+  },
+};
+
+// ── TUTORIAL MODAL ────────────────────────────────────────────────────────────
+function TutorialModal({ onClose }) {
+  const [step, setStep] = useState(0);
+  const steps = [
+    {
+      title: "Welcome to Market Architects! 🏛️",
+      emoji: "🎓",
+      content: "You are a company founder. Your goal is to build a business from scratch and take it public (IPO) in 5 years — 20 quarterly rounds.",
+      detail: "This game teaches real financial concepts used by professional investors. Don't worry if you don't know finance — every term is explained as you play.",
+      color: T.gold,
+    },
+    {
+      title: "The 7 Criteria — Your Winning Conditions",
+      emoji: "✅",
+      content: "To win, your company must satisfy 7 financial criteria by the end of Year 5. Think of them as 7 health checks your business must pass.",
+      detail: "1. Revenue growing 4 of 5 years
+2. Profit growing 4 of 5 years
+3. Cash flow growing 4 of 5 years
+4. Moat strength ≥ 50
+5. Return on Equity ≥ 1.0x
+6. Current Ratio ≥ 1.0x
+7. Your company is undervalued by 10-30%",
+      color: T.green,
+    },
+    {
+      title: "Your Economic Moat 🛡️",
+      emoji: "🏰",
+      content: "A moat is your competitive advantage — what stops customers from leaving you for competitors. Without a strong moat, competitors will attack and steal your customers.",
+      detail: "Think of it like a castle moat filled with water. The bigger the moat, the harder it is for enemies to attack. Your moat decays every quarter unless you invest in R&D. NEVER ignore your moat.",
+      color: T.cyan,
+    },
+    {
+      title: "The 20-Token Budget 🎯",
+      emoji: "💰",
+      content: "Every quarter you have exactly 20 tokens to spend across 6 business areas. You CANNOT spend more than 20 — this is the heart of the game.",
+      detail: "⚙️ Operations → more revenue
+🔬 R&D/Moat → protect competitive advantage
+👥 Hiring → grow capacity
+💵 Pricing → improve margins
+🏦 Debt Mgmt → financial health
+📈 Dividends → investor relations
+
+Balance is everything. No single lever can be maxed while others are zero.",
+      color: T.orange,
+    },
+    {
+      title: "Competitor AI ⚔️",
+      emoji: "🤖",
+      content: "You face one of 3 AI competitors who actively try to destroy your business. They read your financial state and attack your weaknesses.",
+      detail: "⚡ Disruptor — attacks every quarter when your moat is weak
+🏛️ Incumbent — attacks every 4th quarter with devastating strikes
+🎯 Specialist — steals your most profitable customers when RoE rises
+
+The best defence is a strong moat and consistent R&D investment.",
+      color: T.red,
+    },
+    {
+      title: "Event Cards 🃏",
+      emoji: "🎴",
+      content: "Each quarter an event card is drawn — good or bad. These simulate real business surprises: market booms, scandals, regulatory changes, partnerships.",
+      detail: "📈 Opportunity cards — boost your business (invest to lock in gains)
+⚠️ Warning cards — manageable threats (respond quickly)
+💥 Crisis cards — serious damage (requires immediate token response)
+
+You always get 2 response options with clear token costs shown.",
+      color: T.purple,
+    },
+    {
+      title: "You're Ready! Let's Build 🚀",
+      emoji: "🏗️",
+      content: "Start with Consumer Goods + Brand Loyalty if you're new — it's the easiest combination. The game explains each decision as you make it.",
+      detail: "💡 Tips for beginners:
+• Always spend 3+ tokens on R&D/Moat
+• Keep Debt Management at 4+
+• Check the Scorecard tab every quarter
+• Read every event card carefully — the response options guide you
+• Tap the ❓ button anytime for help",
+      color: T.gold,
+    },
+  ];
+
+  const step_data = steps[step];
+
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.97)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { ...css.card, maxWidth: 400, width: '100%', border: `1px solid ${step_data.color}44` } },
+      // Progress dots
+      React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 16 } },
+        steps.map((_, i) => React.createElement('div', { key: i, style: { width: i === step ? 20 : 6, height: 6, borderRadius: 3, background: i === step ? step_data.color : T.dim, transition: 'all 0.3s' } }))
+      ),
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+        React.createElement('div', { style: { fontSize: 52, marginBottom: 12 } }, step_data.emoji),
+        React.createElement('div', { style: { fontSize: 17, fontWeight: 800, color: step_data.color, marginBottom: 10, lineHeight: 1.4 } }, step_data.title),
+        React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.7, marginBottom: 14 } }, step_data.content),
+        React.createElement('div', { style: { background: T.surface, borderRadius: 10, padding: '12px 14px', fontSize: 12, color: T.muted, lineHeight: 1.9, textAlign: 'left', whiteSpace: 'pre-line' } }, step_data.detail)
+      ),
+      React.createElement('div', { style: { display: 'flex', gap: 10 } },
+        step > 0 && React.createElement('button', { onClick: () => setStep(s => s - 1), style: { ...css.btn(T.muted), flex: 1 } }, '← Back'),
+        step < steps.length - 1
+          ? React.createElement('button', { onClick: () => setStep(s => s + 1), style: { ...css.btn(step_data.color), flex: 2 } }, 'Next →')
+          : React.createElement('button', { onClick: onClose, style: { ...css.btn(T.gold), flex: 2, fontSize: 15 } }, "Let's Build! 🚀")
+      ),
+      step < steps.length - 1 && React.createElement('button', { onClick: onClose, style: { width: '100%', background: 'transparent', border: 'none', color: T.muted, fontSize: 11, cursor: 'pointer', marginTop: 10, padding: 8 } }, 'Skip tutorial')
+    )
+  )
+}
+
+// ── GLOSSARY MODAL ────────────────────────────────────────────────────────────
+function GlossaryModal({ term, onClose }) {
+  const entry = GLOSSARY[term];
+  if (!entry) return null;
+
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { ...css.card, maxWidth: 400, width: '100%', border: `1px solid ${T.cyan}44` } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 44 } }, entry.emoji),
+        React.createElement('div', { style: { fontSize: 18, fontWeight: 800, color: T.cyan } }, entry.term),
+        React.createElement('div', { style: css.pill(T.cyan) }, 'Financial Term Explained')
+      ),
+      React.createElement('div', { style: { marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 } }, 'What it means'),
+        React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.7 } }, entry.simple)
+      ),
+      React.createElement('div', { style: { background: T.surface, borderRadius: 10, padding: 12, marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 } }, '📖 Real World Example'),
+        React.createElement('div', { style: { fontSize: 12, color: T.yellow, lineHeight: 1.7 } }, entry.example)
+      ),
+      React.createElement('div', { style: { background: `${T.green}10`, border: `1px solid ${T.green}33`, borderRadius: 10, padding: 12, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.green, fontWeight: 700, marginBottom: 4 } }, '💡 Game Tip'),
+        React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.7 } }, entry.tip)
+      ),
+      React.createElement('button', { onClick: onClose, style: { ...css.btn(T.cyan), padding: 12 } }, 'Got it! ✓')
+    )
+  )
+}
+
+// ── PHASE GUIDE MODAL ─────────────────────────────────────────────────────────
+function PhaseGuideModal({ phase, onClose }) {
+  const guide = PHASE_GUIDES[phase];
+  if (!guide) return null;
+
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9997, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, overflowY: 'auto' } },
+    React.createElement('div', { style: { ...css.card, maxWidth: 400, width: '100%', border: `1px solid ${guide.color}44`, margin: '20px auto' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 20, fontWeight: 800, color: guide.color } }, guide.title),
+        React.createElement('div', { style: { fontSize: 12, color: T.muted, marginTop: 4 } }, guide.subtitle)
+      ),
+      React.createElement('div', { style: { background: T.surface, borderRadius: 10, padding: 12, marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.7 } }, guide.guide)
+      ),
+      React.createElement('div', { style: { marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 } }, '✅ What to Focus On'),
+        guide.priorities.map((p, i) => React.createElement('div', { key: i, style: { display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' } },
+          React.createElement('div', { style: { width: 20, height: 20, borderRadius: '50%', background: `${guide.color}22`, border: `1px solid ${guide.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: guide.color, flexShrink: 0, fontWeight: 700 } }, i + 1),
+          React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.6 } }, p)
+        ))
+      ),
+      React.createElement('div', { style: { background: `${T.red}10`, border: `1px solid ${T.red}33`, borderRadius: 10, padding: 12, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.red, fontWeight: 700, marginBottom: 4 } }, '⚠️ Watch Out'),
+        React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.7 } }, guide.warning)
+      ),
+      React.createElement('button', { onClick: onClose, style: { ...css.btn(guide.color), padding: 12 } }, 'Got it! ✓')
+    )
+  )
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
+
+// ── TUTORIAL & ONBOARDING DATA ────────────────────────────────────────────────
+
+const GLOSSARY = {
+  'FCFE': { term: 'Free Cash Flow to Equity', emoji: '💰', simple: 'The actual cash your company has LEFT after paying all bills, loans and investments. Think of it as your company\'s real "take-home pay". Higher is always better.', example: 'If your company earns $5M but spends $3M on buildings, equipment and debt — your FCFE is $2M.' },
+  'RoE': { term: 'Return on Equity', emoji: '📊', simple: 'How efficiently your company turns investor money into profit. A RoE of 1.0x means for every $1 investors put in, you generate $1 in profit. Above 1.0x = excellent.', example: 'If shareholders invested $8M and you made $10M profit, your RoE = 1.25x — great!' },
+  'Current Ratio': { term: 'Current Ratio', emoji: '⚖️', simple: 'Can your company pay its SHORT-TERM bills? Divide what you own (assets) by what you owe (liabilities). Must stay above 1.0x — below that means you might run out of cash to pay suppliers.', example: 'You have $3M in the bank, customers owe you $2M. You owe suppliers $4M. Ratio = 5/4 = 1.25x ✅' },
+  'Intrinsic Value': { term: 'Intrinsic Value', emoji: '🔍', simple: 'What your company is ACTUALLY worth based on future cash flows — not what the market says. A great investor buys when market price is ABOVE intrinsic value (undervalued). You win when IV is 10-30% below market price.', example: 'If your company generates $2M/year, intrinsic value might be $20M. If market values it at $25M — it\'s overvalued by 20%.' },
+  'Economic Moat': { term: 'Economic Moat', emoji: '🏰', simple: 'Your company\'s PROTECTION from competitors. Named after castle moats — the deeper your moat, the harder it is for rivals to take your customers. Without a moat, competitors copy you and steal your business.', example: 'Apple\'s moat is brand loyalty. Coca-Cola\'s is brand + cost advantage. Google\'s is network effects.' },
+  'Gross Profit': { term: 'Gross Profit', emoji: '📈', simple: 'Revenue minus the direct cost of making your product. If you sell shoes for $100 and they cost $60 to make, gross profit is $40. Higher gross margin = more efficient business.', example: 'Software companies have 80%+ gross margins. Supermarkets often have only 25%.' },
+  'Operating Cash Flow': { term: 'Operating Cash Flow', emoji: '🔄', simple: 'Cash generated from your day-to-day business operations — before investments or loans. This is the purest measure of whether your core business actually makes money.', example: 'Revenue $10M, staff costs $4M, materials $2M, rent $1M = Operating CF of $3M.' },
+  'Market Price': { term: 'Market Price per Share', emoji: '💹', simple: 'What investors are currently willing to PAY for one share of your company. Influenced by your moat strength, debt levels, and investor excitement (hype). Your goal is for this to be slightly ABOVE intrinsic value.', example: 'If intrinsic value is $10/share but market price is $13/share — that\'s a 23% premium. Investors believe in your future.' },
+};
+
+const LEVER_EXPLANATIONS = {
+  ops: {
+    title: 'Operations Investment',
+    emoji: '⚙️',
+    simple: 'Spending on your core business — factories, delivery systems, production capacity. More tokens = more revenue growth.',
+    why: 'Every token adds 6% to your revenue. This is your primary growth engine.',
+    risk: 'Spending too much here without pricing strategy leads to thin profit margins.',
+    newbie: 'Start with 3-4 tokens here. It\'s your engine — don\'t let it run empty.',
+  },
+  rd: {
+    title: 'R&D / Moat Spending',
+    emoji: '🔬',
+    simple: 'Investment in innovation, brand building, patents, or deepening customer relationships — whatever protects your competitive position.',
+    why: 'This repairs and strengthens your economic moat. Without it, your moat decays every quarter and competitors can attack.',
+    risk: 'Underinvesting here is the #1 way players lose. Your moat ALWAYS decays — you must always repair it.',
+    newbie: 'NEVER put 0 tokens here. Minimum 2 tokens every quarter or your moat will collapse within 5 rounds.',
+  },
+  hiring: {
+    title: 'Hiring',
+    emoji: '👥',
+    simple: 'Growing your team — more staff means more capacity to serve customers and grow revenue.',
+    why: 'Each token adds 3% revenue. But each hire also adds fixed payroll costs that reduce your cash flow.',
+    risk: 'Over-hiring is expensive. Hiring costs remain even when revenue drops.',
+    newbie: 'Keep at 2-3 tokens. Hiring is good for growth but don\'t over-hire early.',
+  },
+  pricing: {
+    title: 'Pricing Strategy',
+    emoji: '💵',
+    simple: 'Optimising what you charge customers — premium pricing, value-based pricing, or market positioning.',
+    why: 'Each token adds 4% to your gross margin. This directly improves profitability without needing more sales.',
+    risk: 'High pricing attracts the Specialist competitor who will try to steal your premium customers.',
+    newbie: 'Use 2-3 tokens. Pricing is one of the most powerful levers — it improves profit without extra cost.',
+  },
+  debt: {
+    title: 'Debt Management',
+    emoji: '🏦',
+    simple: 'Managing your company\'s borrowing and repayments. Affects your liquidity (ability to pay short-term bills).',
+    why: 'Keeps your Current Ratio above 1.0x. Also reduces COGS through better supplier terms.',
+    risk: 'Low debt management leaves you exposed to legal attacks from the Incumbent competitor.',
+    newbie: 'Always keep at least 3-4 tokens here to keep your Current Ratio above 1.0x.',
+  },
+  dividend: {
+    title: 'Dividend / Retain',
+    emoji: '📈',
+    simple: 'Deciding whether to pay profits to shareholders (dividends) or keep them in the company (retained earnings).',
+    why: 'Retaining earnings grows your equity base which improves RoE. Paying dividends creates investor excitement (hype) that raises market price.',
+    risk: 'Paying too many dividends reduces your FCFE and lowers intrinsic value.',
+    newbie: 'Start with 0-1 tokens. Focus on retaining earnings in early quarters to build equity.',
+  },
+};
+
+const PHASE_GUIDANCE = {
+  Foundation: {
+    rounds: 'Q1-Q4',
+    emoji: '🏗️',
+    goal: 'Establish your moat and get operations running. Losses are acceptable in this phase.',
+    focus: 'Invest heavily in R&D to build your moat. Set up operations. Don\'t worry about profit yet.',
+    warning: 'The Consistency Clock starts at Q5. You have 4 quarters to build before you must show growth.',
+    tokens: { ops: '3-4', rd: '4-5', hiring: '2-3', pricing: '2', debt: '3-4', dividend: '0-1' },
+  },
+  Traction: {
+    rounds: 'Q5-Q8',
+    emoji: '🚀',
+    goal: 'Revenue and profit must start growing consistently. The Consistency Clock is now running.',
+    focus: 'Balance moat maintenance with revenue growth. Get RoE above 1.0x.',
+    warning: 'From Q5, RoE must stay at or above 1.0x every quarter. Check this BEFORE confirming tokens.',
+    tokens: { ops: '4-5', rd: '3-4', hiring: '2-3', pricing: '2-3', debt: '3', dividend: '1-2' },
+  },
+  Defence: {
+    rounds: 'Q9-Q12',
+    emoji: '🛡️',
+    goal: 'Protect your moat from competitor attacks. All 7 criteria must be approaching target.',
+    focus: 'Keep moat above 50. Watch for Incumbent attacks every 4th quarter.',
+    warning: 'Competitor attacks intensify here. Keep R&D tokens high to resist attacks.',
+    tokens: { ops: '3-4', rd: '4-5', hiring: '2', pricing: '2-3', debt: '3-4', dividend: '1-2' },
+  },
+  Dominance: {
+    rounds: 'Q13-Q16',
+    emoji: '👑',
+    goal: 'All 7 metrics must be at or near target. IPO Readiness screen unlocks at Q16.',
+    focus: 'Fine-tune intrinsic value gap to hit 10-30% below market price.',
+    warning: 'Crisis events become more frequent. Don\'t reduce moat investment now.',
+    tokens: { ops: '3', rd: '4', hiring: '2', pricing: '3', debt: '3-4', dividend: '2-3' },
+  },
+  'IPO Window': {
+    rounds: 'Q17-Q20',
+    emoji: '🏆',
+    goal: 'ALL 7 criteria must pass simultaneously at Q20. This is your final push.',
+    focus: 'Don\'t change a winning formula. Maintain consistency.',
+    warning: 'One bad quarter here can fail the Consistency Clock. Play safe.',
+    tokens: { ops: '3', rd: '4', hiring: '2', pricing: '3', debt: '4', dividend: '2' },
+  },
+};
+
+const CRITERIA_EXPLANATIONS = {
+  revenueGrowth: { simple: 'Your total sales must grow in at least 4 out of 5 years. One bad year is forgiven — two bad years means failure.', tip: 'Keep Ops tokens at 3+ every quarter. Revenue grows with Operations and Hiring tokens.' },
+  profitGrowth: { simple: 'Your net profit (after all costs) must grow in at least 4 of 5 years. Profit = Revenue minus all expenses.', tip: 'Balance Pricing tokens to improve margins. Don\'t over-hire as payroll costs eat profit.' },
+  cashFlow: { simple: 'Cash from day-to-day operations must grow in at least 4 of 5 years. Even a profitable company can fail if it runs out of cash.', tip: 'Debt Management tokens improve cash flow. Keep Hiring reasonable to reduce payroll drain.' },
+  moatStrength: { simple: 'Your competitive moat must score at least 50/100 at the end of Year 5. Below 50 means competitors can easily copy you.', tip: 'Never put 0 tokens in R&D. Your moat decays every quarter automatically — you must always repair it.' },
+  roe: { simple: 'From Quarter 5 onward, your Return on Equity must be 1.0x or above every single quarter without exception.', tip: 'Retain earnings (low Dividend tokens) to build equity base. Keep operations profitable.' },
+  currentRatio: { simple: 'You must always have more short-term assets than short-term liabilities. Below 1.0x = risk of not paying your bills.', tip: 'Keep Debt Management at 3+ tokens always. This directly improves your current ratio.' },
+  ivGap: { simple: 'Your company\'s true value (intrinsic value) must be 10-30% BELOW what the market values it. This proves investors believe in your future.', tip: 'R&D tokens raise market price via moat premium. Pricing tokens add hype factor. Balance them carefully.' },
+};
+
+// ── TUTORIAL COMPONENTS ───────────────────────────────────────────────────────
+
+function OnboardingScreen({ onComplete }) {
+  const [step, setStep] = useState(0);
+  
+  const steps = [
+    {
+      emoji: '🏛️',
+      title: 'Welcome to Market Architects',
+      content: 'You are a company founder. Your goal: build a business so strong that investors line up to buy shares when you go public (IPO) after 5 years.',
+      highlight: null,
+    },
+    {
+      emoji: '🎯',
+      title: 'How You Win',
+      content: 'At the end of Year 5, your company must pass 7 financial tests simultaneously. Think of them like school exams — you must pass ALL 7, not just most of them.',
+      highlight: '7 criteria = 7 financial health checks your business must pass',
+    },
+    {
+      emoji: '🎮',
+      title: 'The 20-Token Budget',
+      content: 'Every quarter (3 months), you get EXACTLY 20 tokens to spend across 6 business levers. You can never do everything — you must choose your priorities wisely.',
+      highlight: 'Unspent tokens are LOST. Use all 20 every quarter.',
+    },
+    {
+      emoji: '🏰',
+      title: 'Your Economic Moat',
+      content: 'A moat is your competitive advantage — what stops rivals from copying you. Without a moat, competitors steal your customers and you lose. Your moat DECAYS every quarter unless you invest in R&D.',
+      highlight: '⚠️ Never spend 0 tokens on R&D — your moat will collapse!',
+    },
+    {
+      emoji: '🤖',
+      title: 'Competitor AI',
+      content: 'You have one AI competitor who watches your company and attacks when you\'re weak. They attack your moat, steal customers, and cause problems. Keep your moat strong to deter attacks.',
+      highlight: 'Strong moat (50+) = competitor avoids you. Weak moat = constant attacks.',
+    },
+    {
+      emoji: '🃏',
+      title: 'Event Cards',
+      content: 'Every quarter, a random event card is drawn — good or bad. These represent real business surprises: market crashes, viral moments, new regulations. You must respond with your 20 tokens.',
+      highlight: 'Crisis events get worse if your moat is already weak. Keep it strong!',
+    },
+    {
+      emoji: '💡',
+      title: 'First-Time Tip',
+      content: 'For your first game: Choose Consumer Goods (Beginner) industry. Use Brand Loyalty moat. Put 4 tokens in Operations, 4 in R&D, 3 in Hiring, 3 in Pricing, 4 in Debt, 2 in Dividend. This balanced approach will teach you the game.',
+      highlight: 'The game shows projections BEFORE you confirm — always check them!',
+    },
+  ];
+
+  const step_data = steps[step];
+  const isLast = step === steps.length - 1;
+
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.98)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 24, maxWidth: 400, width: '100%' } },
+      // Progress dots
+      React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 24 } },
+        steps.map((_, i) => React.createElement('div', { key: i, style: { width: i === step ? 20 : 8, height: 8, borderRadius: 4, background: i === step ? T.gold : i < step ? T.green : '#1a2640', transition: 'all 0.3s' } }))
+      ),
+      // Content
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+        React.createElement('div', { style: { fontSize: 56, marginBottom: 12 } }, step_data.emoji),
+        React.createElement('div', { style: { fontSize: 18, fontWeight: 800, color: T.text, marginBottom: 12 } }, step_data.title),
+        React.createElement('div', { style: { fontSize: 13, color: '#8a9ab5', lineHeight: 1.7 } }, step_data.content)
+      ),
+      // Highlight box
+      step_data.highlight && React.createElement('div', { style: { background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: T.gold, lineHeight: 1.6 } },
+        '💡 ', step_data.highlight
+      ),
+      // Buttons
+      React.createElement('div', { style: { display: 'flex', gap: 10 } },
+        step > 0 && React.createElement('button', {
+          onClick: () => setStep(s => s - 1),
+          style: { flex: 1, padding: 12, background: 'transparent', border: '1px solid #1a2640', borderRadius: 10, color: T.muted, cursor: 'pointer', fontSize: 13 }
+        }, '← Back'),
+        React.createElement('button', {
+          onClick: () => isLast ? onComplete() : setStep(s => s + 1),
+          style: { flex: 2, padding: 12, background: isLast ? 'linear-gradient(135deg,#FFD700,#FFA500)' : 'rgba(0,229,255,0.1)', border: `1px solid ${isLast ? T.gold : T.cyan}`, borderRadius: 10, color: isLast ? '#050A14' : T.cyan, cursor: 'pointer', fontSize: 13, fontWeight: 700 }
+        }, isLast ? '🚀 Start Building!' : 'Next →')
+      )
+    )
+  );
+}
+
+function GlossaryModal({ term, onClose }) {
+  const data = GLOSSARY[term];
+  if (!data) return null;
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: '1px solid rgba(0,229,255,0.3)', borderRadius: 20, padding: 24, maxWidth: 400, width: '100%' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 40 } }, data.emoji),
+        React.createElement('div', { style: { fontSize: 16, fontWeight: 800, color: T.cyan, marginTop: 8 } }, data.term),
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 2 } }, `"${term}"`)
+      ),
+      React.createElement('div', { style: { background: '#111D35', borderRadius: 12, padding: 14, marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 } }, 'In Simple Terms'),
+        React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.7 } }, data.simple)
+      ),
+      React.createElement('div', { style: { background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.2)', borderRadius: 12, padding: 14, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.green, marginBottom: 6, fontWeight: 700 } }, '📌 Real Example'),
+        React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', lineHeight: 1.7 } }, data.example)
+      ),
+      React.createElement('button', { onClick: onClose, style: { width: '100%', padding: 12, background: 'rgba(0,229,255,0.1)', border: '1px solid rgba(0,229,255,0.3)', borderRadius: 10, color: T.cyan, cursor: 'pointer', fontWeight: 700 } }, 'Got it! ✓')
+    )
+  );
+}
+
+function LeverHelpModal({ lever, onClose }) {
+  const data = LEVER_EXPLANATIONS[lever];
+  if (!data) return null;
+  const lv = LEVERS.find(l => l.id === lever);
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9997, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: `1px solid ${lv?.color || T.cyan}44`, borderRadius: 20, padding: 24, maxWidth: 400, width: '100%' } },
+      React.createElement('div', { style: { marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 32 } }, data.emoji),
+        React.createElement('div', { style: { fontSize: 17, fontWeight: 800, color: T.text, marginTop: 8 } }, data.title)
+      ),
+      [
+        { label: 'What it does', value: data.simple, color: T.cyan },
+        { label: 'Why it matters', value: data.why, color: T.green },
+        { label: '⚠️ Risk', value: data.risk, color: T.orange },
+        { label: '💡 Beginner tip', value: data.newbie, color: T.gold },
+      ].map(({ label, value, color }) =>
+        React.createElement('div', { key: label, style: { background: '#111D35', borderRadius: 10, padding: 12, marginBottom: 10 } },
+          React.createElement('div', { style: { fontSize: 10, color, fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 } }, label),
+          React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', lineHeight: 1.7 } }, value)
+        )
+      ),
+      React.createElement('button', { onClick: onClose, style: { width: '100%', padding: 12, background: `${lv?.color || T.cyan}18`, border: `1px solid ${lv?.color || T.cyan}44`, borderRadius: 10, color: lv?.color || T.cyan, cursor: 'pointer', fontWeight: 700 } }, 'Got it! ✓')
+    )
+  );
+}
+
+function PhaseGuideModal({ phase, onClose }) {
+  const data = PHASE_GUIDANCE[phase];
+  if (!data) return null;
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9996, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 20, padding: 24, maxWidth: 400, width: '100%', maxHeight: '90vh', overflowY: 'auto' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 40 } }, data.emoji),
+        React.createElement('div', { style: { fontSize: 17, fontWeight: 800, color: T.gold } }, phase + ' Phase'),
+        React.createElement('div', { style: { fontSize: 12, color: T.muted, marginTop: 4 } }, data.rounds)
+      ),
+      [
+        { label: '🎯 Your Goal', value: data.goal, color: T.green },
+        { label: '🔑 Focus On', value: data.focus, color: T.cyan },
+        { label: '⚠️ Watch Out', value: data.warning, color: T.red },
+      ].map(({ label, value, color }) =>
+        React.createElement('div', { key: label, style: { background: '#111D35', borderRadius: 10, padding: 12, marginBottom: 10 } },
+          React.createElement('div', { style: { fontSize: 10, color, fontWeight: 700, marginBottom: 4 } }, label),
+          React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', lineHeight: 1.7 } }, value)
+        )
+      ),
+      React.createElement('div', { style: { background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 10, padding: 12, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 10, color: T.gold, fontWeight: 700, marginBottom: 8 } }, '💡 SUGGESTED TOKEN ALLOCATION'),
+        Object.entries(data.tokens).map(([k, v]) => {
+          const lv = LEVERS.find(l => l.id === k);
+          return React.createElement('div', { key: k, style: { display: 'flex', justifyContent: 'space-between', padding: '4px 0' } },
+            React.createElement('span', { style: { fontSize: 12, color: T.muted } }, `${lv?.emoji} ${lv?.name}`),
+            React.createElement('span', { style: { fontSize: 12, fontWeight: 700, color: T.gold, fontFamily: 'monospace' } }, v)
+          );
+        })
+      ),
+      React.createElement('button', { onClick: onClose, style: { width: '100%', padding: 12, background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 10, color: T.gold, cursor: 'pointer', fontWeight: 700 } }, 'Got it! ✓')
+    )
+  );
+}
+
+function CriteriaHelpModal({ criteriaKey, onClose }) {
+  const data = CRITERIA_EXPLANATIONS[criteriaKey];
+  if (!data) return null;
+  const names = {
+    revenueGrowth: '📈 Revenue Growth',
+    profitGrowth: '💰 Profit Growth',
+    cashFlow: '🔄 Operating Cash Flow',
+    moatStrength: '🏰 Economic Moat',
+    roe: '📊 Return on Equity',
+    currentRatio: '⚖️ Current Ratio',
+    ivGap: '🔍 Intrinsic Value Discount',
+  };
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.95)', zIndex: 9995, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 20, padding: 24, maxWidth: 400, width: '100%' } },
+      React.createElement('div', { style: { fontSize: 17, fontWeight: 800, color: T.green, marginBottom: 16 } }, names[criteriaKey] || criteriaKey),
+      React.createElement('div', { style: { background: '#111D35', borderRadius: 10, padding: 14, marginBottom: 12 } },
+        React.createElement('div', { style: { fontSize: 10, color: T.cyan, fontWeight: 700, marginBottom: 6 } }, 'WHAT THIS MEANS'),
+        React.createElement('div', { style: { fontSize: 13, color: '#8a9ab5', lineHeight: 1.7 } }, data.simple)
+      ),
+      React.createElement('div', { style: { background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 10, padding: 14, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 10, color: T.gold, fontWeight: 700, marginBottom: 6 } }, '💡 HOW TO PASS THIS'),
+        React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', lineHeight: 1.7 } }, data.tip)
+      ),
+      React.createElement('button', { onClick: onClose, style: { width: '100%', padding: 12, background: 'rgba(0,255,136,0.1)', border: '1px solid rgba(0,255,136,0.3)', borderRadius: 10, color: T.green, cursor: 'pointer', fontWeight: 700 } }, 'Got it! ✓')
+    )
+  );
+}
+
 export default function App() {
   const [screen, setScreen] = useState('lobby') // lobby | setup | game | results
   const [playerName, setPlayerName] = useState('')
@@ -605,6 +1233,9 @@ export default function App() {
   const [quarterResults, setQuarterResults] = useState(null)
   const [toast, setToast] = useState(null)
   const [projectedFinancials, setProjectedFinancials] = useState(null)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [showGlossary, setShowGlossary] = useState(null) // term key
+  const [showPhaseGuide, setShowPhaseGuide] = useState(false)
 
   // Toast helper
   const showToast = useCallback((msg, color = T.cyan) => {
@@ -694,7 +1325,8 @@ export default function App() {
     }
     setGameState(initialState)
     setScreen('game')
-    showToast('Game started! Allocate your tokens.', T.gold)
+    setShowTutorial(true)
+    showToast('Game started! Read the tutorial first 📖', T.gold)
   }
 
   // ── CONFIRM QUARTER ──────────────────────────────────────────────────────────
@@ -811,15 +1443,25 @@ export default function App() {
           React.createElement('div', { style: { fontSize: 11, color: T.muted } }, `Year ${year} · Q${qInYear} · ${phase}`),
           React.createElement('div', { style: { fontSize: 18, fontWeight: 800, color: T.gold } }, `🏛️ ${playerName}`)
         ),
-        React.createElement('div', { style: { textAlign: 'right' } },
-          React.createElement('div', { style: { fontSize: 10, color: T.muted } }, 'Round'),
-          React.createElement('div', { style: { fontSize: 22, fontWeight: 900, color: T.cyan, fontFamily: 'monospace' } }, `${gameState.quarter}/20`)
+        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+          React.createElement('div', { style: { textAlign: 'right' } },
+            React.createElement('div', { style: { fontSize: 10, color: T.muted } }, 'Round'),
+            React.createElement('div', { style: { fontSize: 22, fontWeight: 900, color: T.cyan, fontFamily: 'monospace' } }, `${gameState.quarter}/20`)
+          ),
+          React.createElement('button', {
+            onClick: () => setShowTutorial(true),
+            style: { width: 36, height: 36, borderRadius: '50%', border: `1px solid ${T.gold}`, background: `${T.gold}18`, color: T.gold, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }
+          }, '?')
         )
       ),
       // Progress bar
       React.createElement('div', { style: { marginTop: 8, height: 4, background: T.surface, borderRadius: 2 } },
         React.createElement('div', { style: { height: '100%', width: `${(gameState.quarter / 20) * 100}%`, background: `linear-gradient(90deg,${T.gold},${T.orange})`, borderRadius: 2 } })
-      )
+      ),
+      React.createElement('button', {
+        onClick: () => setShowPhaseGuide(true),
+        style: { marginTop: 8, width: '100%', padding: '6px', background: 'transparent', border: `1px solid ${T.border}`, borderRadius: 8, color: T.muted, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }
+      }, `📖 ${phase} Phase — What should I focus on this phase?`)
     ),
 
     // Tab bar
@@ -876,6 +1518,9 @@ export default function App() {
 
       // TOKEN ALLOCATION TAB
       tab === 'tokens' && React.createElement('div', null,
+        React.createElement('div', { style: { background: `${T.cyan}10`, border: `1px solid ${T.cyan}33`, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: T.cyan, lineHeight: 1.7 } },
+          "💡 Tap ❓ next to any lever to learn what it does. Total tokens must not exceed 20."
+        ),
         React.createElement('div', { style: { ...css.card, marginBottom: 14 } },
           React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
             React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, '🎯 Token Allocation'),
@@ -894,7 +1539,8 @@ export default function App() {
             value: tokens[lever.id] || 0,
             onChange: v => setTokens(t => ({ ...t, [lever.id]: v })),
             remaining,
-            disabled: gameState.status !== 'active'
+            disabled: gameState.status !== 'active',
+            onHelp: (id) => setShowGlossary(id)
           })
         ),
         React.createElement('button', {
@@ -949,9 +1595,13 @@ export default function App() {
             React.createElement('div', { style: { fontSize: 15, fontWeight: 800 } }, '7 Investment Criteria'),
             React.createElement('div', { style: css.pill(criteria.passCount === 7 ? T.green : T.gold) }, `${criteria.passCount}/7`)
           ),
-          Object.values(criteria.criteria).map((c, i) =>
-            React.createElement(CriterionRow, { key: i, criterion: c })
-          )
+          React.createElement(CriterionRow, { criterion: criteria.criteria.revenueGrowth, onHelp: () => setShowGlossary('revenue') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.profitGrowth, onHelp: () => setShowGlossary('grossProfit') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.cashFlow, onHelp: () => setShowGlossary('fcfe') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.moatStrength, onHelp: () => setShowGlossary('moat') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.roe, onHelp: () => setShowGlossary('roe') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.currentRatio, onHelp: () => setShowGlossary('currentRatio') }),
+          React.createElement(CriterionRow, { criterion: criteria.criteria.ivGap, onHelp: () => setShowGlossary('intrinsicValue') })
         ),
         gameState.quarter >= 16 && React.createElement('div', { style: { ...css.card, border: `1px solid ${T.gold}44` } },
           React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: T.gold, marginBottom: 10 } }, '📈 IPO Readiness'),
@@ -1020,7 +1670,11 @@ export default function App() {
       )
     ),
 
-    // Modals
+    // Tutorial & Help Modals
+    showTutorial && React.createElement(TutorialModal, { onClose: () => setShowTutorial(false) }),
+    showGlossary && React.createElement(GlossaryModal, { term: showGlossary, onClose: () => setShowGlossary(null) }),
+    showPhaseGuide && React.createElement(PhaseGuideModal, { phase, onClose: () => setShowPhaseGuide(false) }),
+    // Game Modals
     React.createElement(AttackModal, { attacks, onDismiss: dismissAttacks }),
     React.createElement(EventCardModal, { card: eventCard, onRespond: respondToEvent }),
     React.createElement(QuarterResultsModal, { results: quarterResults, onContinue: continueFromResults }),
@@ -1125,10 +1779,18 @@ function SetupScreen({ playerName, roomCode, roomData, isHost, onStart }) {
         )
       ),
       // Start button
-      selectedIndustry && selectedMoat && React.createElement('button', {
-        onClick: () => onStart(industry, selectedMoat, competitorMap[selectedIndustry] || 'disruptor'),
-        style: { ...css.btn(T.gold), padding: 16, fontSize: 16, fontWeight: 800 }
-      }, '🚀 Start Game →'),
+      selectedIndustry && selectedMoat && React.createElement('div', null,
+        industry && industry.difficulty === 'Beginner' && React.createElement('div', { style: { background: `${T.green}10`, border: `1px solid ${T.green}33`, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: T.green } },
+          "✅ Great choice for beginners! Consumer Goods + Brand Loyalty is the most forgiving combination."
+        ),
+        (industry && industry.difficulty === 'Expert') && React.createElement('div', { style: { background: `${T.red}10`, border: `1px solid ${T.red}33`, borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: T.red } },
+          "⚠️ Expert difficulty! Pharmaceuticals requires heavy R&D investment every quarter. Not recommended for first-time players."
+        ),
+        React.createElement('button', {
+          onClick: () => onStart(industry, selectedMoat, competitorMap[selectedIndustry] || 'disruptor'),
+          style: { ...css.btn(T.gold), padding: 16, fontSize: 16, fontWeight: 800 }
+        }, '🚀 Start Game →')
+      ),
       // Waiting players
       roomData && roomData.players && React.createElement('div', { style: { ...css.card, marginTop: 16 } },
         React.createElement('div', { style: { fontSize: 12, color: T.muted, marginBottom: 8 } }, 'Players in Room:'),
