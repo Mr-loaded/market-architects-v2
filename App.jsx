@@ -398,7 +398,6 @@ function fmt(n) {
 }
 
 
-import React, { useState, useEffect, useCallback } from 'react'
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 const T = {
