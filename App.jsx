@@ -1435,7 +1435,7 @@ export default function App() {
   const qInYear = ((gameState.quarter - 1) % 4) + 1
   const phase = gameState.quarter <= 4 ? 'Foundation' : gameState.quarter <= 8 ? 'Traction' : gameState.quarter <= 12 ? 'Defence' : gameState.quarter <= 16 ? 'Dominance' : 'IPO Window'
 
-  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', fontFamily: "'Inter',sans-serif", color: T.text } },
+  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', fontFamily: "Inter,sans-serif", color: T.text } },
     // Header
     React.createElement('div', { style: { background: T.card, borderBottom: `1px solid ${T.border}`, padding: '12px 16px' } },
       React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
