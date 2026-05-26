@@ -906,6 +906,143 @@ function CriteriaHelpModal({ criteriaKey, onClose }) {
   );
 }
 
+// ── ONBOARDING MODAL ─────────────────────────────────────────────────────────
+function OnboardingModal({ onClose }) {
+  const [step, setStep] = useState(0);
+
+  const screens = [
+    {
+      emoji: '🏛️',
+      title: 'Your Mission',
+      color: T.gold,
+      content: 'You are a startup CEO. Your goal: build a company so strong that investors line up to buy shares when you go public (IPO) after 5 years (20 quarters).',
+      highlight: 'This game teaches real financial concepts used by professional investors — explained as you play.',
+    },
+    {
+      emoji: '🎮',
+      title: 'How the Game Works',
+      color: T.cyan,
+      content: 'Every quarter (3 months), you get 20 tokens to invest across 6 business levers — Operations, R&D, Hiring, Pricing, Debt, and Dividends. Your choices determine your financials.',
+      highlight: 'Game loop: Allocate tokens → Random event happens → Financials update → Repeat 20 times.',
+    },
+    {
+      emoji: '🏆',
+      title: 'Your 7 Win Conditions',
+      color: T.green,
+      content: 'At the end of Year 5, your company must pass ALL 7 financial tests simultaneously. Fail even one and you cannot IPO.',
+      bullets: [
+        '📈 Revenue grows in 4 of 5 years',
+        '💰 Profit grows in 4 of 5 years',
+        '🔄 Cash flow grows in 4 of 5 years',
+        '🏰 Moat strength stays ≥ 50/100',
+        '📊 Return on Equity ≥ 1.0x (from Year 2)',
+        '⚖️ Current Ratio ≥ 1.0x always',
+        '🔍 Company is undervalued by 10-30%',
+      ],
+    },
+    {
+      emoji: '🏰',
+      title: 'Your Economic Moat',
+      color: T.orange,
+      content: 'Your moat is your competitive advantage — what stops rivals from copying you and stealing your customers. Without a moat, you lose.',
+      highlight: '⚠️ Critical: Your moat DECAYS every quarter automatically. You MUST invest in R&D/Moat every quarter or it will collapse and competitors will attack you constantly.',
+    },
+    {
+      emoji: '🤖',
+      title: 'Competitor AI',
+      color: T.red,
+      content: 'You face one AI competitor who watches your company and attacks when you are weak. They attack your moat, steal customers, and drain your cash flow.',
+      highlight: 'Moat above 50 = competitor stays back. Moat below 50 = constant attacks. Keep your moat strong!',
+    },
+    {
+      emoji: '🃏',
+      title: 'Event Cards',
+      color: T.cyan,
+      content: 'Every quarter a random event card is drawn — market crashes, viral moments, regulatory changes, new patents. You must respond using your 20 tokens.',
+      highlight: 'Crisis events get WORSE if your moat is already weak. A strong moat is your best defence against bad luck.',
+    },
+    {
+      emoji: '💡',
+      title: 'Beginner Strategy',
+      color: T.gold,
+      content: 'For your first game: Choose Consumer Goods (Beginner) with Brand Loyalty moat. Use this balanced token allocation every quarter:',
+      tokens: [
+        ['⚙️ Operations', '4-5', 'Drives revenue growth'],
+        ['🔬 R&D / Moat', '4', 'NEVER skip this!'],
+        ['👥 Hiring', '2-3', 'Moderate growth'],
+        ['💵 Pricing', '2-3', 'Improve margins'],
+        ['🏦 Debt Management', '3-4', 'Keep current ratio healthy'],
+        ['📈 Dividend / Retain', '1-2', 'Build equity slowly'],
+      ],
+    },
+  ];
+
+  const screen = screens[step];
+  const isLast = step === screens.length - 1;
+
+  return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.98)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('div', { style: { background: '#0D1627', border: `1px solid ${screen.color}44`, borderRadius: 24, padding: 24, maxWidth: 420, width: '100%', maxHeight: '90vh', overflowY: 'auto' } },
+      // Progress dots
+      React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 } },
+        screens.map((_, i) =>
+          React.createElement('div', { key: i, style: { width: i === step ? 20 : 6, height: 6, borderRadius: 3, background: i === step ? screen.color : T.border, transition: 'all 0.3s' } })
+        )
+      ),
+      // Emoji & Title
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+        React.createElement('div', { style: { fontSize: 52, marginBottom: 8 } }, screen.emoji),
+        React.createElement('div', { style: { fontSize: 20, fontWeight: 900, color: screen.color } }, screen.title),
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 4 } }, `${step + 1} of ${screens.length}`)
+      ),
+      // Content
+      React.createElement('div', { style: { background: '#111D35', borderRadius: 12, padding: 14, marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 14, color: T.text, lineHeight: 1.8 } }, screen.content)
+      ),
+      // Highlight box
+      screen.highlight && React.createElement('div', { style: { background: `${screen.color}10`, border: `1px solid ${screen.color}33`, borderRadius: 12, padding: 14, marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 13, color: screen.color, lineHeight: 1.7, fontWeight: 600 } }, screen.highlight)
+      ),
+      // Bullets
+      screen.bullets && React.createElement('div', { style: { marginBottom: 14 } },
+        screen.bullets.map((b, i) =>
+          React.createElement('div', { key: i, style: { display: 'flex', gap: 10, padding: '6px 0', borderBottom: `1px solid ${T.border}` } },
+            React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.6 } }, b)
+          )
+        )
+      ),
+      // Token table
+      screen.tokens && React.createElement('div', { style: { marginBottom: 14 } },
+        screen.tokens.map(([name, value, tip]) =>
+          React.createElement('div', { key: name, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${T.border}` } },
+            React.createElement('div', null,
+              React.createElement('div', { style: { fontSize: 13, color: T.text, fontWeight: 600 } }, name),
+              React.createElement('div', { style: { fontSize: 11, color: T.muted } }, tip)
+            ),
+            React.createElement('div', { style: { fontSize: 16, fontWeight: 900, color: T.gold, fontFamily: 'monospace', background: `${T.gold}15`, padding: '4px 10px', borderRadius: 8 } }, value)
+          )
+        )
+      ),
+      // Buttons
+      React.createElement('div', { style: { display: 'flex', gap: 10, marginTop: 8 } },
+        step > 0 && React.createElement('button', {
+          onClick: () => setStep(s => s - 1),
+          style: { flex: 1, padding: 12, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, color: T.muted, cursor: 'pointer', fontWeight: 700, fontSize: 13 }
+        }, '← Back'),
+        React.createElement('button', {
+          onClick: () => isLast ? onClose() : setStep(s => s + 1),
+          style: { flex: 2, padding: 12, background: isLast ? screen.color : `${screen.color}18`, border: `1px solid ${screen.color}44`, borderRadius: 12, color: isLast ? '#000' : screen.color, cursor: 'pointer', fontWeight: 800, fontSize: 14 }
+        }, isLast ? "🚀 Let's Play!" : 'Next →')
+      ),
+      // Skip
+      !isLast && React.createElement('button', {
+        onClick: onClose,
+        style: { width: '100%', background: 'transparent', border: 'none', color: T.muted, fontSize: 11, cursor: 'pointer', marginTop: 10, padding: 8 }
+      }, 'Skip briefing — go straight to game')
+    )
+  );
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState('lobby') // lobby | setup | game | results
   const [playerName, setPlayerName] = useState('')
@@ -923,6 +1060,7 @@ export default function App() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [showGlossary, setShowGlossary] = useState(null) // term key
   const [showPhaseGuide, setShowPhaseGuide] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   // Toast helper
   const showToast = useCallback((msg, color = T.cyan) => {
@@ -1012,8 +1150,8 @@ export default function App() {
     }
     setGameState(initialState)
     setScreen('game')
-    setShowTutorial(true)
-    showToast('Game started! Read the tutorial first 📖', T.gold)
+    setShowOnboarding(true)
+    showToast('Game started! Read the mission briefing first 📖', T.gold)
   }
 
   // ── CONFIRM QUARTER ──────────────────────────────────────────────────────────
@@ -1136,7 +1274,7 @@ export default function App() {
             React.createElement('div', { style: { fontSize: 22, fontWeight: 900, color: T.cyan, fontFamily: 'monospace' } }, `${gameState.quarter}/20`)
           ),
           React.createElement('button', {
-            onClick: () => setShowTutorial(true),
+            onClick: () => setShowOnboarding(true),
             style: { width: 36, height: 36, borderRadius: '50%', border: `1px solid ${T.gold}`, background: `${T.gold}18`, color: T.gold, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }
           }, '?')
         )
@@ -1159,6 +1297,7 @@ export default function App() {
         { id: 'moat', emoji: '🛡️', label: 'Moat' },
         { id: 'scorecard', emoji: '✅', label: 'Score' },
         { id: 'intel', emoji: '🔍', label: 'Intel' },
+        { id: 'guide', emoji: '📖', label: 'Guide' },
       ].map(t =>
         React.createElement('button', {
           key: t.id, onClick: () => setTab(t.id),
@@ -1357,7 +1496,82 @@ export default function App() {
       )
     ),
 
-    // Tutorial & Help Modals
+    // GUIDE TAB
+    tab === 'guide' && React.createElement('div', { style: { padding: 16, paddingBottom: 100 } },
+
+      // Mission briefing button
+      React.createElement('button', {
+        onClick: () => setShowOnboarding(true),
+        style: { ...css.btn(T.gold), marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13 }
+      }, '🎯 Replay Mission Briefing'),
+
+      // Token levers section
+      React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 } }, '⚙️ The 6 Business Levers'),
+      Object.entries(LEVER_EXPLANATIONS).map(([key, data]) =>
+        React.createElement('div', { key, style: { ...css.card, marginBottom: 10 } },
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 } },
+            React.createElement('div', { style: { fontSize: 22 } }, data.emoji),
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 800, color: T.text } }, data.title)
+          ),
+          [
+            { label: 'What it does', value: data.simple, color: T.cyan },
+            { label: 'Why it matters', value: data.why, color: T.green },
+            { label: '⚠️ Risk', value: data.risk, color: T.orange },
+            { label: '💡 Beginner tip', value: data.newbie, color: T.gold },
+          ].map(({ label, value, color }) =>
+            React.createElement('div', { key: label, style: { background: T.surface, borderRadius: 8, padding: 10, marginBottom: 6 } },
+              React.createElement('div', { style: { fontSize: 9, color, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 } }, label),
+              React.createElement('div', { style: { fontSize: 12, color: T.muted, lineHeight: 1.6 } }, value)
+            )
+          )
+        )
+      ),
+
+      // Financial terms section
+      React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 10 } }, '📊 Financial Terms Explained'),
+      Object.entries(GLOSSARY).map(([key, entry]) =>
+        React.createElement('div', { key, style: { ...css.card, marginBottom: 10 } },
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 } },
+            React.createElement('div', { style: { fontSize: 22 } }, entry.emoji),
+            React.createElement('div', { style: { fontSize: 14, fontWeight: 800, color: T.cyan } }, entry.term)
+          ),
+          React.createElement('div', { style: { background: T.surface, borderRadius: 8, padding: 10, marginBottom: 6 } },
+            React.createElement('div', { style: { fontSize: 9, color: T.cyan, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 } }, 'What it means'),
+            React.createElement('div', { style: { fontSize: 12, color: T.muted, lineHeight: 1.6 } }, entry.simple)
+          ),
+          entry.example && React.createElement('div', { style: { background: T.surface, borderRadius: 8, padding: 10, marginBottom: 6 } },
+            React.createElement('div', { style: { fontSize: 9, color: T.gold, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 } }, '📖 Example'),
+            React.createElement('div', { style: { fontSize: 12, color: T.muted, lineHeight: 1.6 } }, entry.example)
+          )
+        )
+      ),
+
+      // Win conditions section
+      React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8, marginBottom: 10 } }, '🏆 Your 7 Win Conditions'),
+      Object.entries(CRITERIA_EXPLANATIONS).map(([key, data]) => {
+        const names = {
+          revenueGrowth: '📈 Revenue Growth',
+          profitGrowth: '💰 Profit Growth',
+          cashFlow: '🔄 Cash Flow Growth',
+          moatStrength: '🏰 Economic Moat ≥ 50',
+          roe: '📊 Return on Equity ≥ 1.0x',
+          currentRatio: '⚖️ Current Ratio ≥ 1.0x',
+          ivGap: '🔍 Intrinsic Value Discount 10-30%',
+        };
+        return React.createElement('div', { key, style: { ...css.card, marginBottom: 10 } },
+          React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: T.green, marginBottom: 8 } }, names[key] || key),
+          React.createElement('div', { style: { background: T.surface, borderRadius: 8, padding: 10, marginBottom: 6 } },
+            React.createElement('div', { style: { fontSize: 9, color: T.cyan, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 } }, 'What it means'),
+            React.createElement('div', { style: { fontSize: 12, color: T.muted, lineHeight: 1.6 } }, data.simple)
+          ),
+          React.createElement('div', { style: { background: `${T.gold}10`, border: `1px solid ${T.gold}33`, borderRadius: 8, padding: 10 } },
+            React.createElement('div', { style: { fontSize: 9, color: T.gold, fontWeight: 700, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 1 } }, '💡 How to pass'),
+            React.createElement('div', { style: { fontSize: 12, color: T.muted, lineHeight: 1.6 } }, data.tip)
+          )
+        )
+      })
+    ),
+    showOnboarding && React.createElement(OnboardingModal, { onClose: () => setShowOnboarding(false) }),
     showTutorial && React.createElement(TutorialModal, { onClose: () => setShowTutorial(false) }),
     showGlossary && React.createElement(GlossaryModal, { term: showGlossary, onClose: () => setShowGlossary(null) }),
     showPhaseGuide && React.createElement(PhaseGuideModal, { phase, onClose: () => setShowPhaseGuide(false) }),
