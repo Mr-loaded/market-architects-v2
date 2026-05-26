@@ -392,9 +392,9 @@ function computeIPOScore(criteria, ivGap) {
 }
 
 function fmt(n) {
-  if (Math.abs(n) >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
-  if (Math.abs(n) >= 1000) return '$' + (n / 1000).toFixed(0) + 'K';
-  return '$' + Math.round(n).toLocaleString();
+  if (Math.abs(n) >= 1000000) return '₦' + (n / 1000000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1000) return '₦' + (n / 1000).toFixed(0) + 'K';
+  return '₦' + Math.round(n).toLocaleString();
 }
 
 
@@ -542,11 +542,58 @@ function AttackModal({ attacks, onDismiss }) {
   )
 }
 
+// ── QUARTER COMMENTARY ENGINE ─────────────────────────────────────────────────
+function generateCommentary(financials, moatChange, criteria, quarter) {
+  const comments = []
+  const passCount = Object.values(criteria.criteria).filter(c => c.pass).length
+
+  if (moatChange.newStrength < 30) {
+    comments.push({ emoji: '🚨', color: T.red, text: `Your moat has collapsed to ${moatChange.newStrength}/100. In real markets, this is what happened to Nokia when smartphones arrived — they ignored their competitive advantage until competitors had already taken over. You must invest heavily in R&D next quarter or this game is over.` })
+  } else if (moatChange.newStrength < 50) {
+    comments.push({ emoji: '⚠️', color: T.orange, text: `Moat at ${moatChange.newStrength}/100 — below the critical 50 threshold. Think of Blackberry in 2010: still profitable but losing ground fast. Competitors will now attack you every quarter. Increase R&D tokens immediately.` })
+  } else if (moatChange.repair > moatChange.decay) {
+    comments.push({ emoji: '🛡️', color: T.green, text: `Your moat grew to ${moatChange.newStrength}/100 this quarter. This is exactly what Dangote Cement does — consistently reinvesting in cost efficiency so competitors cannot match their prices. Keep this up.` })
+  }
+
+  if (financials.fcfe < 0) {
+    comments.push({ emoji: '💸', color: T.red, text: `Negative FCFE of ${fmt(financials.fcfe)} means your company is burning cash. In real life, this is how companies go bankrupt — not from lack of revenue, but from running out of actual cash. Reduce hiring costs and increase pricing tokens next quarter.` })
+  } else if (financials.fcfe > 3000000) {
+    comments.push({ emoji: '💰', color: T.green, text: `Strong FCFE of ${fmt(financials.fcfe)}. Free cash flow is what Warren Buffett looks for first in any company. A business that generates consistent cash can survive recessions, fund growth, and reward investors. You are building something real.` })
+  }
+
+  if (financials.roe < 1.0 && quarter >= 5) {
+    comments.push({ emoji: '📊', color: T.red, text: `RoE of ${financials.roe}x is below the required 1.0x. This means for every ₦1 investors put into your company, you are generating less than ₦1 in profit. Zenith Bank maintains RoE above 1.5x consistently — that is why investors trust them. Reduce costs or improve margins.` })
+  } else if (financials.roe >= 1.5) {
+    comments.push({ emoji: '📈', color: T.green, text: `Excellent RoE of ${financials.roe}x. You are generating ₦${financials.roe} for every ₦1 invested. This is the level that attracts institutional investors. Real companies like MTN Nigeria trade at premium valuations because of sustained high RoE.` })
+  }
+
+  if (financials.currentRatio < 1.0) {
+    comments.push({ emoji: '⚖️', color: T.red, text: `Current Ratio of ${financials.currentRatio}x means you cannot pay your short-term bills. This triggered the collapse of many Nigerian companies during the 2016 recession — they had revenue on paper but no cash to pay suppliers. Increase Debt Management tokens urgently.` })
+  }
+
+  if (quarter === 5) {
+    comments.push({ emoji: '⏰', color: T.gold, text: `Quarter 5 begins. The Consistency Clock is now running. From here, your RoE must stay at or above 1.0x every single quarter without exception. This is similar to how the SEC evaluates companies before approving an IPO — sustained performance, not just one good quarter.` })
+  } else if (quarter === 10) {
+    comments.push({ emoji: '🏁', color: T.gold, text: `Halfway through your 5-year journey. Real investors look at the midpoint trajectory to predict the final outcome. If you are passing 5+ criteria now, you are on track. If not, restructure your token allocation immediately.` })
+  } else if (quarter === 17) {
+    comments.push({ emoji: '🏆', color: T.gold, text: `Final stretch — 4 quarters to IPO. Do not change a winning formula. The biggest mistake companies make before listing is over-engineering their strategy. If your numbers are working, stay consistent.` })
+  }
+
+  if (passCount <= 3 && quarter >= 8) {
+    comments.push({ emoji: '🔴', color: T.red, text: `Only ${passCount}/7 criteria passing at Quarter ${quarter}. In real corporate finance, a company failing this many health checks would be rated as high-risk by credit agencies. Restructure your entire token strategy — visit the Guide tab now.` })
+  } else if (passCount === 7) {
+    comments.push({ emoji: '✅', color: T.green, text: `All 7 criteria passing! You are managing this company like a professional value investor. If this were a real NSE-listed company, analysts would be placing Buy ratings right now. Maintain this discipline to the end.` })
+  }
+
+  return comments.slice(0, 3)
+}
+
 // ── QUARTER RESULTS MODAL ─────────────────────────────────────────────────────
-function QuarterResultsModal({ results, onContinue }) {
+function QuarterResultsModal({ results, quarter, onContinue }) {
   if (!results) return null
   const { financials, moatChange, criteria } = results
   const passCount = Object.values(criteria.criteria).filter(c => c.pass).length
+  const commentary = generateCommentary(financials, moatChange, criteria, quarter || 1)
 
   return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(5,10,20,0.97)', zIndex: 997, display: 'flex', flexDirection: 'column', padding: 20, overflowY: 'auto' } },
     React.createElement('div', { style: { maxWidth: 400, margin: '0 auto', width: '100%' } },
@@ -555,7 +602,6 @@ function QuarterResultsModal({ results, onContinue }) {
         React.createElement('div', { style: { fontSize: 20, fontWeight: 800, color: T.gold } }, 'Financial Results'),
         React.createElement('div', { style: css.pill(passCount === 7 ? T.green : passCount >= 5 ? T.gold : T.orange) }, `${passCount}/7 criteria passing`)
       ),
-      // Financials grid
       React.createElement('div', { style: { ...css.card, marginBottom: 14 } },
         React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: T.muted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 } }, 'This Quarter'),
         [
@@ -572,7 +618,6 @@ function QuarterResultsModal({ results, onContinue }) {
           )
         )
       ),
-      // Moat change
       React.createElement('div', { style: { ...css.card, marginBottom: 14 } },
         React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: T.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 } }, 'Moat Update'),
         React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
@@ -586,6 +631,15 @@ function QuarterResultsModal({ results, onContinue }) {
         React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
           React.createElement('span', { style: { fontSize: 12, color: T.muted } }, 'New Strength'),
           React.createElement('span', { style: { color: T.gold, fontFamily: 'monospace', fontWeight: 700 } }, moatChange.newStrength)
+        )
+      ),
+      commentary.length > 0 && React.createElement('div', { style: { marginBottom: 14 } },
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 } }, '📰 Market Analyst Commentary'),
+        commentary.map((c, i) =>
+          React.createElement('div', { key: i, style: { background: `${c.color}08`, border: `1px solid ${c.color}33`, borderRadius: 12, padding: 14, marginBottom: 10 } },
+            React.createElement('div', { style: { fontSize: 16, marginBottom: 6 } }, c.emoji),
+            React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.8 } }, c.text)
+          )
         )
       ),
       React.createElement('button', { onClick: onContinue, style: { ...css.btn(T.gold), fontSize: 15, padding: 14 } }, 'Continue to Next Quarter →')
@@ -1058,9 +1112,64 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const [projectedFinancials, setProjectedFinancials] = useState(null)
   const [showTutorial, setShowTutorial] = useState(false)
-  const [showGlossary, setShowGlossary] = useState(null) // term key
+  const [showGlossary, setShowGlossary] = useState(null)
   const [showPhaseGuide, setShowPhaseGuide] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [resuming, setResuming] = useState(false)
+
+  // ── SESSION PERSISTENCE ──────────────────────────────────────────────────────
+  // On mount, check if player has a saved session in localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('ma_session')
+    if (saved) {
+      try {
+        const { name, code } = JSON.parse(saved)
+        if (name && code) {
+          setPlayerName(name)
+          setRoomCode(code)
+          setResuming(true)
+        }
+      } catch (e) {}
+    }
+  }, [])
+
+  // When resuming, try to reconnect to the saved room
+  useEffect(() => {
+    if (!resuming || !roomCode || !playerName) return
+    db.ref(`ma_rooms/${roomCode}`).once('value').then(snap => {
+      const data = snap.val()
+      if (data && data.players && data.players[playerName]) {
+        const playerData = data.players[playerName]
+        setRoomData(data)
+        setIsHost(data.host === playerName)
+        setGameState(playerData)
+        if (playerData.status === 'complete' || playerData.status === 'bankrupt') {
+          setScreen('results')
+        } else if (data.status === 'playing') {
+          setScreen('game')
+        } else {
+          setScreen('setup')
+        }
+        showToast(`Welcome back, ${playerName}! Resuming your game 🎮`, T.green)
+      } else {
+        // Session expired or room deleted — clear and start fresh
+        localStorage.removeItem('ma_session')
+        setRoomCode('')
+        setPlayerName('')
+      }
+      setResuming(false)
+    }).catch(() => {
+      localStorage.removeItem('ma_session')
+      setResuming(false)
+    })
+  }, [resuming, roomCode, playerName])
+
+  // Save session to localStorage whenever roomCode or playerName changes
+  useEffect(() => {
+    if (roomCode && playerName) {
+      localStorage.setItem('ma_session', JSON.stringify({ name: playerName, code: roomCode }))
+    }
+  }, [roomCode, playerName])
 
   // Toast helper
   const showToast = useCallback((msg, color = T.cyan) => {
@@ -1081,25 +1190,38 @@ export default function App() {
 
   // Firebase room subscription
   useEffect(() => {
-    if (!roomCode) return
+    if (!roomCode || resuming) return
     const ref = db.ref(`ma_rooms/${roomCode}`)
     ref.on('value', snap => {
       const data = snap.val()
       if (!data) return
       setRoomData(data)
-      // If game started, load our player state
       if (data.status === 'playing' && data.players && data.players[playerName]) {
         setGameState(data.players[playerName])
-        if (data.status === 'playing' && screen === 'lobby') setScreen('game')
+        if (screen === 'lobby') setScreen('game')
       }
     })
     return () => ref.off()
-  }, [roomCode, playerName])
+  }, [roomCode, playerName, resuming])
 
   // ── CREATE ROOM ──────────────────────────────────────────────────────────────
   async function createRoom() {
     if (!playerName.trim()) { showToast('Enter your name first!', T.red); return }
-    const code = Math.random().toString(36).slice(2, 7).toUpperCase()
+
+    // Generate a unique room code — check Firebase to ensure it does not already exist
+    let code = ''
+    let attempts = 0
+    while (attempts < 10) {
+      const candidate = Math.random().toString(36).slice(2, 7).toUpperCase()
+      const snap = await db.ref(`ma_rooms/${candidate}`).once('value')
+      if (!snap.exists()) {
+        code = candidate
+        break
+      }
+      attempts++
+    }
+    if (!code) { showToast('Could not create room. Try again.', T.red); return }
+
     setRoomCode(code)
     setIsHost(true)
     await db.ref(`ma_rooms/${code}`).set({
@@ -1117,9 +1239,25 @@ export default function App() {
     const snap = await db.ref(`ma_rooms/${code}`).once('value')
     const data = snap.val()
     if (!data) { showToast('Room not found!', T.red); return }
-    if (data.status !== 'waiting') { showToast('Game already started!', T.red); return }
+
+    // Allow rejoining an in-progress game if the player was already in the room
+    const alreadyInRoom = data.players && data.players[playerName]
+    if (!alreadyInRoom && data.status !== 'waiting') {
+      showToast('Game already started — you cannot join a room in progress.', T.red); return
+    }
+
     setRoomCode(code)
     setIsHost(false)
+
+    if (alreadyInRoom && data.status === 'playing') {
+      // Rejoin in-progress game
+      setGameState(data.players[playerName])
+      setRoomData(data)
+      setScreen('game')
+      showToast(`Welcome back to room ${code}!`, T.green)
+      return
+    }
+
     await db.ref(`ma_rooms/${code}/players/${playerName}`).set({ name: playerName, ready: false })
     setScreen('setup')
     showToast(`Joined room ${code}!`, T.green)
@@ -1578,7 +1716,7 @@ export default function App() {
     // Game Modals
     React.createElement(AttackModal, { attacks, onDismiss: dismissAttacks }),
     React.createElement(EventCardModal, { card: eventCard, onRespond: respondToEvent }),
-    React.createElement(QuarterResultsModal, { results: quarterResults, onContinue: continueFromResults }),
+    React.createElement(QuarterResultsModal, { results: quarterResults, quarter: gameState?.quarter, onContinue: continueFromResults }),
 
     // Toast
     toast && React.createElement('div', { style: { position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: toast.color, color: '#000', padding: '10px 20px', borderRadius: 20, fontWeight: 700, fontSize: 13, zIndex: 9999, whiteSpace: 'nowrap' } }, toast.msg)
@@ -1586,13 +1724,25 @@ export default function App() {
 }
 
 // ── LOBBY SCREEN ──────────────────────────────────────────────────────────────
-function LobbyScreen({ playerName, setPlayerName, onCreate, onJoin }) {
+function LobbyScreen({ playerName, setPlayerName, onCreate, onJoin, showToast }) {
   const [joinCode, setJoinCode] = useState('')
-  const [mode, setMode] = useState('') // '' | 'create' | 'join'
+  const [mode, setMode] = useState('')
+  const [savedSession, setSavedSession] = useState(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ma_session')
+    if (saved) { try { setSavedSession(JSON.parse(saved)) } catch (e) {} }
+  }, [])
+
+  function clearSession() {
+    localStorage.removeItem('ma_session')
+    setSavedSession(null)
+    if (showToast) showToast('Session cleared. Starting fresh!', T.cyan)
+  }
 
   return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter',sans-serif" } },
     React.createElement('div', { style: { width: '100%', maxWidth: 400 } },
-      React.createElement('div', { style: { textAlign: 'center', marginBottom: 40 } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 28 } },
         React.createElement('div', { style: { fontSize: 64 } }, '🏛️'),
         React.createElement('div', { style: { fontSize: 28, fontWeight: 900, background: `linear-gradient(135deg,${T.gold},${T.orange})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } }, 'Market Architects'),
         React.createElement('div', { style: { fontSize: 13, color: T.muted, marginTop: 6 } }, 'A Value Investing Simulation Game'),
@@ -1600,7 +1750,20 @@ function LobbyScreen({ playerName, setPlayerName, onCreate, onJoin }) {
           ['1-4 Players', '20 Rounds', '60-90 min'].map(tag => React.createElement('span', { key: tag, style: css.pill(T.gold) }, tag))
         )
       ),
-      // Name input
+      savedSession && React.createElement('div', { style: { ...css.card, marginBottom: 20, border: `1px solid ${T.green}44`, background: `${T.green}08` } },
+        React.createElement('div', { style: { fontSize: 12, color: T.green, fontWeight: 700, marginBottom: 6 } }, '🎮 Active game found!'),
+        React.createElement('div', { style: { fontSize: 11, color: T.muted, marginBottom: 12 } }, `Player: ${savedSession.name} · Room: ${savedSession.code}`),
+        React.createElement('div', { style: { display: 'flex', gap: 8 } },
+          React.createElement('button', {
+            onClick: () => { setPlayerName(savedSession.name); onJoin(savedSession.code) },
+            style: { ...css.btn(T.green), flex: 2, padding: 10, fontSize: 13 }
+          }, '▶ Continue Game'),
+          React.createElement('button', {
+            onClick: clearSession,
+            style: { ...css.btn(T.muted), flex: 1, padding: 10, fontSize: 12 }
+          }, '✕ New Game')
+        )
+      ),
       React.createElement('div', { style: { marginBottom: 20 } },
         React.createElement('div', { style: { fontSize: 11, color: T.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 } }, 'Your Name'),
         React.createElement('input', {
@@ -1610,7 +1773,6 @@ function LobbyScreen({ playerName, setPlayerName, onCreate, onJoin }) {
           style: { width: '100%', padding: 14, background: T.card, border: `1px solid ${T.border2}`, borderRadius: 12, color: T.text, fontSize: 15, outline: 'none' }
         })
       ),
-      // Buttons
       React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
         React.createElement('button', { onClick: onCreate, style: { ...css.btn(T.gold), padding: 14, fontSize: 15 } }, '🏛️ Create New Room'),
         mode !== 'join' ? React.createElement('button', { onClick: () => setMode('join'), style: { ...css.btn(T.cyan), padding: 14, fontSize: 15 } }, '🤝 Join Existing Room')
@@ -1703,16 +1865,121 @@ function SetupScreen({ playerName, roomCode, roomData, isHost, onStart }) {
   )
 }
 
+// ── QUIZ DATA ─────────────────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  { q: "What does FCFE stand for and what does it measure?", options: ["Free Cash Flow to Equity — the actual cash left after all expenses and investments", "Future Company Financial Earnings — projected profits for next year", "Fixed Cost Financial Estimate — total fixed costs in a quarter", "Federal Cash Flow Evaluation — government assessment of company health"], correct: 0, explanation: "FCFE is Free Cash Flow to Equity — the real cash your company generates after paying all bills, debt and investments. It is the most honest measure of company health." },
+  { q: "Your moat falls to 28/100. What is the most likely consequence?", options: ["Your market price increases because investors see opportunity", "Competitors begin attacking every quarter stealing your customers and revenue", "Your Current Ratio automatically improves", "Nothing changes until Quarter 10"], correct: 1, explanation: "A moat below the crisis threshold means your competitive advantage is gone. Competitors will attack you every quarter, stealing customers and damaging revenue — exactly like what happened to Blackberry after 2010." },
+  { q: "What does a Current Ratio below 1.0x mean for your company?", options: ["You are growing too fast and need to slow down", "You cannot pay your short-term bills and risk running out of cash", "Your intrinsic value is above market price", "Your moat is weakening faster than normal"], correct: 1, explanation: "Current Ratio below 1.0x means your short-term debts exceed your short-term assets. In real life, this is how companies collapse — not from lack of revenue, but from inability to pay suppliers, salaries, and loans when they come due." },
+  { q: "Return on Equity (RoE) of 1.5x means:", options: ["You lost 50% of your equity this quarter", "For every ₦1 investors put in, your company generates ₦1.50 in profit", "Your company is 50% overvalued on the stock market", "Your revenue grew by 1.5% this quarter"], correct: 1, explanation: "RoE measures how efficiently you turn investment into profit. 1.5x means every ₦1 of equity generates ₦1.50 profit. Nigerian banks like Zenith Bank target RoE above 1.5x consistently." },
+  { q: "Intrinsic value must be 10-30% BELOW market price to win. What does this mean?", options: ["Your company is overpriced and about to crash", "Investors believe your future is bright and value you above what the numbers say", "You should immediately reduce your pricing tokens", "Your FCFE is growing faster than market price"], correct: 1, explanation: "When market price is above intrinsic value by 10-30%, investors are paying a premium because they believe in your future growth. This is the sweet spot Warren Buffett looks for." },
+  { q: "Why should you NEVER put 0 tokens in R&D/Moat?", options: ["R&D tokens are the only way to grow revenue", "Your moat decays automatically every quarter and competitors attack when it is weak", "The game penalises you with an automatic -20 points", "Zero R&D causes your Current Ratio to drop below 1.0x"], correct: 1, explanation: "Every moat decays automatically each quarter regardless of what you do. If you do not invest in R&D, the decay compounds and your moat collapses. Once competitors start attacking, recovering is extremely difficult." },
+  { q: "What is an Economic Moat?", options: ["The total debt your company owes to banks and creditors", "Your company's competitive advantage that protects against rivals stealing your customers", "The difference between your revenue and your operating costs", "A penalty applied when your moat strength falls below 50"], correct: 1, explanation: "An economic moat is what Warren Buffett calls a company's durable competitive advantage. Apple's moat is brand loyalty. Google's is network effects. Without a moat, you have no protection." },
+  { q: "Your company has high revenue but negative FCFE. What is happening?", options: ["This is impossible — high revenue always means positive cash flow", "The company is earning but spending more than it earns, burning through cash", "The moat is being repaired automatically", "RoE will automatically fix this next quarter"], correct: 1, explanation: "Revenue and cash flow are different. A company can have growing sales but negative cash flow if costs, debt repayments, and capital expenditure exceed income. Many Nigerian companies collapse this way." },
+  { q: "During the Foundation Phase (Q1-Q4), what should be your priority?", options: ["Maximise dividends to attract investors early", "Build your moat and establish operations even if it means early losses", "Focus entirely on pricing strategy to maximise margins", "Minimise all spending to conserve tokens for later quarters"], correct: 1, explanation: "The Foundation Phase is about building the base. Early losses are acceptable — what matters is establishing a strong moat and operational foundation. Companies that chase profit too early often sacrifice the moat that would protect them in later quarters." },
+  { q: "The Disruptor competitor attacks when your moat is below 50. Which lever best defends against this?", options: ["Dividend/Retain — paying more dividends calms the market", "Hiring — adding staff increases your defensive capacity", "R&D/Moat — directly repairs your competitive advantage", "Pricing — raising prices discourages competitor entry"], correct: 2, explanation: "R&D/Moat tokens directly repair your economic moat. The Disruptor specifically targets companies with weak moats — the only defence is keeping your moat strong through consistent R&D investment every quarter." },
+  { q: "What does Gross Profit measure?", options: ["Total company revenue before any deductions", "Revenue minus the direct cost of making your product or service", "The cash available after all expenses including debt", "The profit after paying corporate income tax"], correct: 1, explanation: "Gross Profit = Revenue minus Cost of Goods Sold. It measures how efficiently you produce your product. Software companies have 80%+ gross margins. Manufacturing companies often have 30-40%." },
+  { q: "Why does Market Price differ from Intrinsic Value?", options: ["Market price is calculated by the government while intrinsic value is calculated by the company", "Market price reflects investor emotion and expectations while intrinsic value reflects actual cash flows", "They are always the same — market price is just another term for intrinsic value", "Market price only applies to public companies while intrinsic value applies to private companies"], correct: 1, explanation: "Intrinsic value is the mathematical worth based on future cash flows. Market price is what investors are currently willing to pay — influenced by sentiment, news, moat perception, and hype." },
+  { q: "Your RoE is 0.7x at Quarter 8. What is the most urgent action?", options: ["Increase dividend tokens to boost investor confidence", "Reduce costs by cutting hiring and increasing pricing to improve profitability per unit of equity", "Spend more on operations to grow revenue faster", "The RoE requirement only starts at Quarter 10 so there is no urgency"], correct: 1, explanation: "RoE must be above 1.0x from Quarter 5 onward without exception. At Quarter 8 you have already failed this criterion. Reduce hiring costs, increase pricing, and retain earnings to grow the equity base efficiently." },
+  { q: "What happens when you Retain Earnings instead of paying Dividends?", options: ["Your market price immediately drops because investors prefer cash payouts", "Your equity base grows which improves RoE and strengthens the company long-term", "Your current ratio deteriorates because you are holding too much cash", "The competitor AI becomes more aggressive because you appear stronger"], correct: 1, explanation: "Retained earnings build your equity base. More equity means the same profit generates a higher RoE. Early in the game, retaining is almost always better than paying dividends." },
+  { q: "A company's moat type is Brand Loyalty. Which lever most effectively repairs it?", options: ["Operations — more production strengthens brand perception", "Hiring — more staff improves customer service and brand experience", "R&D/Moat — directly invests in brand building and innovation", "Debt Management — financial stability protects brand reputation"], correct: 2, explanation: "Each moat type has a specific repair lever. Brand Loyalty moats are repaired through R&D investment — spending on innovation, marketing, and product quality that reinforces why customers choose you over competitors." },
+  { q: "What is the difference between Operating Cash Flow and FCFE?", options: ["They are exactly the same measurement", "Operating Cash Flow is from core business activities; FCFE also subtracts capital expenditure and adds net borrowing", "FCFE measures revenue while Operating Cash Flow measures profit", "Operating Cash Flow includes tax payments while FCFE does not"], correct: 1, explanation: "Operating Cash Flow measures cash from day-to-day business. FCFE goes further — it subtracts capital expenditure and adjusts for net borrowing. FCFE is what actually belongs to equity holders after everything is accounted for." },
+  { q: "You are at Quarter 17 with all 7 criteria passing. What is the best strategy?", options: ["Aggressively increase all tokens to maximise final numbers", "Maintain your current allocation — consistency is more important than optimisation at this stage", "Shift all tokens to dividend payments to maximise investor hype", "Reduce R&D now that your moat is strong enough"], correct: 1, explanation: "The biggest mistake near the end is changing what is working. Your moat still decays every quarter. Your RoE still needs to stay above 1.0x. Volatility in the final stretch can fail criteria that were passing safely." },
+  { q: "What type of competitor attacks specifically when your RoE is high?", options: ["The Disruptor who attacks when your moat is weak", "The Specialist who targets your most profitable customer segments", "The Incumbent who launches legal challenges every 4th quarter", "No competitor is triggered by high RoE"], correct: 1, explanation: "The Specialist AI activates when your RoE rises above 1.5x. It surgically targets your most profitable customers because high RoE signals premium pricing that competitors can undercut in specific segments." },
+  { q: "Which Nigerian company is a real-world example of a Network Effects moat?", options: ["Dangote Cement — cost advantage through scale", "Flutterwave — payment network that becomes more valuable as more users join", "Nigerian Breweries — brand loyalty built over decades", "Nestlé Nigeria — switching costs through integrated supply chains"], correct: 1, explanation: "Flutterwave is a classic network effects example. The more merchants and customers use the payment platform, the more valuable it becomes for everyone — exactly like how Facebook became dominant because everyone else was already on it." },
+  { q: "Your company passes 6 of 7 criteria at the end of Year 5. What is your result?", options: ["Successful IPO with a slight discount to valuation", "Near Miss — no IPO, company survives but does not go public", "Bankruptcy — failing any criterion means immediate shutdown", "Partial IPO where 60% of shares are listed"], correct: 1, explanation: "All 7 criteria must pass simultaneously at the end of Year 5 for an IPO. Passing 6 of 7 results in a Near Miss. This reflects real IPO requirements where regulators assess multiple financial health indicators simultaneously." },
+];
+
+// ── CERTIFICATE COMPONENT ─────────────────────────────────────────────────────
+function Certificate({ playerName, score, industry, moatType, passCount, quizScore, onShare }) {
+  const date = new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
+  const code = `MA-${Date.now().toString(36).toUpperCase().slice(-6)}`
+  const tierColor = score.stars >= 4 ? T.gold : score.stars >= 3 ? T.green : score.stars >= 2 ? T.orange : T.red
+  const ind = INDUSTRIES.find(i => i.id === industry)
+  const moat = MOAT_TYPES[moatType]
+
+  return React.createElement('div', { style: { background: 'linear-gradient(135deg, #0D1627 0%, #111D35 50%, #0D1627 100%)', border: `2px solid ${T.gold}44`, borderRadius: 20, padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden' } },
+    React.createElement('div', { style: { position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: `${T.gold}08`, borderBottomLeftRadius: 80 } }),
+    React.createElement('div', { style: { position: 'absolute', bottom: 0, left: 0, width: 60, height: 60, background: `${T.cyan}08`, borderTopRightRadius: 60 } }),
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+      React.createElement('div', { style: { fontSize: 32 } }, '🏛️'),
+      React.createElement('div', { style: { fontSize: 10, color: T.gold, textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 } }, 'Certificate of Achievement'),
+      React.createElement('div', { style: { width: 60, height: 1, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`, margin: '8px auto' } })
+    ),
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginBottom: 4 } }, 'This certifies that'),
+      React.createElement('div', { style: { fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: 1 } }, playerName),
+      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 4 } }, 'has successfully completed')
+    ),
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16, background: `${T.gold}10`, borderRadius: 12, padding: 12, border: `1px solid ${T.gold}33` } },
+      React.createElement('div', { style: { fontSize: 15, fontWeight: 800, color: T.gold } }, 'Market Architects'),
+      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 2 } }, 'Value Investing Simulation — Level 1'),
+      React.createElement('div', { style: { fontSize: 11, color: T.cyan, marginTop: 4 } }, `${ind?.emoji} ${ind?.name} · ${moat?.emoji} ${moat?.name}`)
+    ),
+    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 } },
+      [
+        { label: 'IPO Result', value: score.tier, color: tierColor },
+        { label: 'Criteria', value: `${passCount}/7`, color: passCount === 7 ? T.green : T.orange },
+        { label: 'Quiz Score', value: `${quizScore}/20`, color: quizScore >= 15 ? T.green : quizScore >= 10 ? T.gold : T.orange },
+      ].map(({ label, value, color }) =>
+        React.createElement('div', { key: label, style: { textAlign: 'center', background: T.surface, borderRadius: 10, padding: '10px 6px' } },
+          React.createElement('div', { style: { fontSize: 13, fontWeight: 900, color } }, value),
+          React.createElement('div', { style: { fontSize: 9, color: T.muted, marginTop: 2 } }, label)
+        )
+      )
+    ),
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 12 } },
+      React.createElement(Stars, { count: score.stars })
+    ),
+    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${T.border}`, paddingTop: 12 } },
+      React.createElement('div', null,
+        React.createElement('div', { style: { fontSize: 9, color: T.muted } }, date),
+        React.createElement('div', { style: { fontSize: 9, color: T.muted, marginTop: 2 } }, `Verification: ${code}`)
+      ),
+      React.createElement('div', { style: { textAlign: 'right' } },
+        React.createElement('div', { style: { fontSize: 9, color: T.gold, fontWeight: 700 } }, 'MARKET ARCHITECTS'),
+        React.createElement('div', { style: { fontSize: 9, color: T.muted } }, 'In partnership with Markets4you')
+      )
+    ),
+    React.createElement('button', { onClick: onShare, style: { ...css.btn(T.cyan), marginTop: 12, fontSize: 12 } }, '📤 Share Certificate')
+  )
+}
+
 // ── RESULTS SCREEN ────────────────────────────────────────────────────────────
-function ResultsScreen({ gameState }) {
+function ResultsScreen({ gameState, playerName }) {
+  const [phase, setPhase] = useState('results')
+  const [quizStep, setQuizStep] = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState([])
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [showExplanation, setShowExplanation] = useState(false)
+
   if (!gameState) return null
   const criteria = checkCriteria(gameState.history || [], gameState.history?.[gameState.history.length - 1] || {}, gameState.moatStrength, 20)
   const lastFinancials = gameState.history?.[gameState.history.length - 1] || {}
   const ivGap = lastFinancials.marketPrice > 0 ? ((lastFinancials.marketPrice - lastFinancials.ivPerShare) / lastFinancials.marketPrice * 100) : 0
   const score = computeIPOScore(criteria.criteria, ivGap)
   const tierColor = score.stars >= 4 ? T.gold : score.stars >= 3 ? T.green : score.stars >= 2 ? T.orange : T.red
+  const passCount = Object.values(criteria.criteria).filter(c => c.pass).length
+  const quizScore = quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].correct).length
 
-  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
+  function handleAnswer(idx) { setSelectedAnswer(idx); setShowExplanation(true) }
+
+  function nextQuestion() {
+    setQuizAnswers(prev => [...prev, selectedAnswer])
+    setSelectedAnswer(null)
+    setShowExplanation(false)
+    if (quizStep < QUIZ_QUESTIONS.length - 1) { setQuizStep(s => s + 1) } else { setPhase('certificate') }
+  }
+
+  function handleShare() {
+    const text = `🏛️ I just completed Market Architects — a value investing simulation game!\n\n📊 Result: ${score.tier}\n⭐ Stars: ${score.stars}/5\n✅ Criteria: ${passCount}/7\n🧠 Quiz: ${quizScore}/20\n\nLearn investing by running a company → marketarchitect.netlify.app`
+    if (navigator.share) { navigator.share({ title: 'Market Architects Certificate', text }) }
+    else { navigator.clipboard?.writeText(text); alert('Certificate text copied! Paste it on WhatsApp, LinkedIn or Twitter.') }
+  }
+
+  function playAgain() { localStorage.removeItem('ma_session'); window.location.reload() }
+
+  // RESULTS PHASE
+  if (phase === 'results') return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
     React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
       React.createElement('div', { style: { textAlign: 'center', marginBottom: 24 } },
         React.createElement('div', { style: { fontSize: 64 } }, score.stars >= 4 ? '🏆' : score.stars >= 3 ? '📈' : score.stars >= 1 ? '📊' : '💀'),
@@ -1722,9 +1989,7 @@ function ResultsScreen({ gameState }) {
       ),
       React.createElement('div', { style: { ...css.card, marginBottom: 16 } },
         React.createElement('div', { style: { fontSize: 13, fontWeight: 700, marginBottom: 12 } }, 'Final Scorecard'),
-        Object.values(criteria.criteria).map((c, i) =>
-          React.createElement(CriterionRow, { key: i, criterion: c })
-        )
+        Object.values(criteria.criteria).map((c, i) => React.createElement(CriterionRow, { key: i, criterion: c }))
       ),
       React.createElement('div', { style: { ...css.card, marginBottom: 16 } },
         React.createElement('div', { style: { fontSize: 13, fontWeight: 700, marginBottom: 10 } }, 'Company Summary'),
@@ -1744,7 +2009,117 @@ function ResultsScreen({ gameState }) {
           )
         )
       ),
-      React.createElement('button', { onClick: () => window.location.reload(), style: { ...css.btn(T.gold), padding: 14, fontSize: 15 } }, '🔄 Play Again')
+      React.createElement('button', { onClick: () => setPhase('quiz'), style: { ...css.btn(T.gold), padding: 14, fontSize: 15, marginBottom: 12 } }, '🧠 Take Certification Quiz →'),
+      React.createElement('button', { onClick: playAgain, style: { ...css.btn(T.muted), padding: 12, fontSize: 13 } }, '🔄 Play Again')
     )
   )
+
+  // QUIZ PHASE
+  if (phase === 'quiz') {
+    const q = QUIZ_QUESTIONS[quizStep]
+    const isCorrect = selectedAnswer === q.correct
+    return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
+      React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
+        React.createElement('div', { style: { marginBottom: 20 } },
+          React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 8 } },
+            React.createElement('div', { style: { fontSize: 13, fontWeight: 700, color: T.gold } }, '🧠 Certification Quiz'),
+            React.createElement('div', { style: { fontSize: 13, color: T.muted } }, `${quizStep + 1}/${QUIZ_QUESTIONS.length}`)
+          ),
+          React.createElement('div', { style: { height: 6, background: T.surface, borderRadius: 3 } },
+            React.createElement('div', { style: { height: '100%', width: `${((quizStep + 1) / QUIZ_QUESTIONS.length) * 100}%`, background: `linear-gradient(90deg,${T.gold},${T.orange})`, borderRadius: 3, transition: 'width 0.3s' } })
+          ),
+          React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 6 } }, `Score so far: ${quizAnswers.filter((a, i) => a === QUIZ_QUESTIONS[i].correct).length}/${quizStep} correct`)
+        ),
+        React.createElement('div', { style: { ...css.card, marginBottom: 16 } },
+          React.createElement('div', { style: { fontSize: 14, fontWeight: 700, color: T.text, lineHeight: 1.7, marginBottom: 16 } }, q.q),
+          q.options.map((opt, i) =>
+            React.createElement('button', {
+              key: i,
+              onClick: () => !showExplanation && handleAnswer(i),
+              style: {
+                width: '100%', padding: 12, marginBottom: 8, borderRadius: 10, textAlign: 'left', fontSize: 12, lineHeight: 1.6,
+                cursor: showExplanation ? 'default' : 'pointer', fontWeight: 500,
+                background: !showExplanation ? T.surface : i === q.correct ? `${T.green}18` : i === selectedAnswer ? `${T.red}18` : T.surface,
+                border: !showExplanation ? `1px solid ${T.border}` : i === q.correct ? `1px solid ${T.green}` : i === selectedAnswer ? `1px solid ${T.red}` : `1px solid ${T.border}`,
+                color: !showExplanation ? T.text : i === q.correct ? T.green : i === selectedAnswer ? T.red : T.muted,
+              }
+            },
+              React.createElement('span', { style: { fontWeight: 700, marginRight: 8 } }, `${String.fromCharCode(65 + i)}.`), opt
+            )
+          )
+        ),
+        showExplanation && React.createElement('div', { style: { ...css.card, marginBottom: 16, border: `1px solid ${isCorrect ? T.green : T.red}44` } },
+          React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: isCorrect ? T.green : T.red, marginBottom: 8 } }, isCorrect ? '✅ Correct!' : '❌ Not quite'),
+          React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.8 } }, q.explanation)
+        ),
+        showExplanation && React.createElement('button', { onClick: nextQuestion, style: { ...css.btn(T.gold), padding: 14, fontSize: 14 } },
+          quizStep < QUIZ_QUESTIONS.length - 1 ? 'Next Question →' : 'See My Certificate →'
+        )
+      )
+    )
+  }
+
+  // CERTIFICATE PHASE
+  if (phase === 'certificate') return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
+    React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+        React.createElement('div', { style: { fontSize: 20, fontWeight: 900, color: T.gold } }, '🎓 Your Certificate'),
+        React.createElement('div', { style: { fontSize: 12, color: T.muted, marginTop: 4 } }, `Quiz Score: ${quizScore}/${QUIZ_QUESTIONS.length} · ${Math.round((quizScore / QUIZ_QUESTIONS.length) * 100)}%`)
+      ),
+      React.createElement(Certificate, { playerName: playerName || gameState.name || 'Player', score, industry: gameState.industry, moatType: gameState.moatType, passCount, quizScore, onShare: handleShare }),
+      React.createElement('button', { onClick: () => setPhase('convert'), style: { ...css.btn(T.gold), padding: 14, fontSize: 15, marginBottom: 12 } }, '💰 Apply What You Learned →'),
+      React.createElement('button', { onClick: playAgain, style: { ...css.btn(T.muted), padding: 12, fontSize: 13 } }, '🔄 Play Again')
+    )
+  )
+
+  // CONVERSION PHASE
+  if (phase === 'convert') return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
+    React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 24 } },
+        React.createElement('div', { style: { fontSize: 52 } }, '📈'),
+        React.createElement('div', { style: { fontSize: 20, fontWeight: 900, color: T.gold } }, 'Ready for Real Markets?'),
+        React.createElement('div', { style: { fontSize: 13, color: T.muted, marginTop: 8, lineHeight: 1.7 } }, 'You just spent 5 simulated years learning to analyse companies, protect competitive advantages, and manage financial health — the same skills professional investors use every day.')
+      ),
+      React.createElement('div', { style: { ...css.card, marginBottom: 16, border: `1px solid ${T.green}33` } },
+        React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: T.green, marginBottom: 12 } }, '✅ What You Now Know'),
+        [
+          'How to evaluate a company\'s economic moat',
+          'Why cash flow matters more than revenue',
+          'How intrinsic value differs from market price',
+          'Why Return on Equity determines long-term investor returns',
+          'How to spot a financially healthy company before investing',
+        ].map((item, i) =>
+          React.createElement('div', { key: i, style: { display: 'flex', gap: 10, padding: '6px 0', borderBottom: `1px solid ${T.border}` } },
+            React.createElement('div', { style: { color: T.green, fontWeight: 700, flexShrink: 0 } }, '→'),
+            React.createElement('div', { style: { fontSize: 12, color: T.text, lineHeight: 1.6 } }, item)
+          )
+        )
+      ),
+      React.createElement('div', { style: { ...css.card, marginBottom: 16, border: `2px solid ${T.gold}44`, background: `linear-gradient(135deg, ${T.card} 0%, #1a2a0a 100%)` } },
+        React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
+          React.createElement('div', { style: { fontSize: 32 } }, '🏦'),
+          React.createElement('div', { style: { fontSize: 16, fontWeight: 900, color: T.gold } }, 'Markets4you'),
+          React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 4 } }, 'Licensed International Broker')
+        ),
+        React.createElement('div', { style: { fontSize: 13, color: T.text, lineHeight: 1.8, marginBottom: 16, textAlign: 'center' } },
+          'Apply the value investing skills you just learned with real stocks, forex, and indices. Markets4you gives you access to global markets from Nigeria.'
+        ),
+        ['✅ Regulated and licensed broker', '✅ Trade global stocks, forex and indices', '✅ Start with as little as $10', '✅ Nigerian customer support'].map((item, i) =>
+          React.createElement('div', { key: i, style: { fontSize: 12, color: T.text, padding: '4px 0' } }, item)
+        ),
+        React.createElement('a', {
+          href: 'https://my.markets4you.com/links/go/7026',
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          style: { display: 'block', marginTop: 16, padding: 16, background: T.gold, borderRadius: 12, color: '#000', fontWeight: 900, fontSize: 15, textAlign: 'center', textDecoration: 'none' }
+        }, '🚀 Open My Markets4you Account →')
+      ),
+      React.createElement('div', { style: { fontSize: 10, color: T.muted, textAlign: 'center', marginBottom: 16, lineHeight: 1.6 } },
+        'Trading involves risk. Only invest what you can afford to lose. Market Architects teaches financial concepts for educational purposes.'
+      ),
+      React.createElement('button', { onClick: playAgain, style: { ...css.btn(T.muted), padding: 12, fontSize: 13 } }, '🔄 Play Again')
+    )
+  )
+
+  return null
 }
