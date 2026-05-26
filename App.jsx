@@ -754,13 +754,13 @@ function TutorialModal({ onClose }) {
       title: "The 7 Criteria — Your Winning Conditions",
       emoji: "✅",
       content: "To win, your company must satisfy 7 financial criteria by the end of Year 5. Think of them as 7 health checks your business must pass.",
-      detail: "1. Revenue growing 4 of 5 years
+      detail: `1. Revenue growing 4 of 5 years
 2. Profit growing 4 of 5 years
 3. Cash flow growing 4 of 5 years
 4. Moat strength ≥ 50
 5. Return on Equity ≥ 1.0x
 6. Current Ratio ≥ 1.0x
-7. Your company is undervalued by 10-30%",
+7. Your company is undervalued by 10-30%`,
       color: T.green,
     },
     {
@@ -1435,7 +1435,7 @@ export default function App() {
   const qInYear = ((gameState.quarter - 1) % 4) + 1
   const phase = gameState.quarter <= 4 ? 'Foundation' : gameState.quarter <= 8 ? 'Traction' : gameState.quarter <= 12 ? 'Defence' : gameState.quarter <= 16 ? 'Dominance' : 'IPO Window'
 
-  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', fontFamily: "Inter,sans-serif", color: T.text } },
+  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', fontFamily: "'Inter',sans-serif", color: T.text } },
     // Header
     React.createElement('div', { style: { background: T.card, borderBottom: `1px solid ${T.border}`, padding: '12px 16px' } },
       React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
