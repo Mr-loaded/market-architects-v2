@@ -774,48 +774,48 @@ function TutorialModal({ onClose }) {
       title: "The 20-Token Budget 🎯",
       emoji: "💰",
       content: "Every quarter you have exactly 20 tokens to spend across 6 business areas. You CANNOT spend more than 20 — this is the heart of the game.",
-      detail: "⚙️ Operations → more revenue
+      detail: `⚙️ Operations → more revenue
 🔬 R&D/Moat → protect competitive advantage
 👥 Hiring → grow capacity
 💵 Pricing → improve margins
 🏦 Debt Mgmt → financial health
 📈 Dividends → investor relations
 
-Balance is everything. No single lever can be maxed while others are zero.",
+Balance is everything. No single lever can be maxed while others are zero.`,
       color: T.orange,
     },
     {
       title: "Competitor AI ⚔️",
       emoji: "🤖",
       content: "You face one of 3 AI competitors who actively try to destroy your business. They read your financial state and attack your weaknesses.",
-      detail: "⚡ Disruptor — attacks every quarter when your moat is weak
+      detail: `⚡ Disruptor — attacks every quarter when your moat is weak
 🏛️ Incumbent — attacks every 4th quarter with devastating strikes
 🎯 Specialist — steals your most profitable customers when RoE rises
 
-The best defence is a strong moat and consistent R&D investment.",
+The best defence is a strong moat and consistent R&D investment.`,
       color: T.red,
     },
     {
       title: "Event Cards 🃏",
       emoji: "🎴",
       content: "Each quarter an event card is drawn — good or bad. These simulate real business surprises: market booms, scandals, regulatory changes, partnerships.",
-      detail: "📈 Opportunity cards — boost your business (invest to lock in gains)
+      detail: `📈 Opportunity cards — boost your business (invest to lock in gains)
 ⚠️ Warning cards — manageable threats (respond quickly)
 💥 Crisis cards — serious damage (requires immediate token response)
 
-You always get 2 response options with clear token costs shown.",
+You always get 2 response options with clear token costs shown.`,
       color: T.purple,
     },
     {
       title: "You're Ready! Let's Build 🚀",
       emoji: "🏗️",
       content: "Start with Consumer Goods + Brand Loyalty if you're new — it's the easiest combination. The game explains each decision as you make it.",
-      detail: "💡 Tips for beginners:
+      detail: `💡 Tips for beginners:
 • Always spend 3+ tokens on R&D/Moat
 • Keep Debt Management at 4+
 • Check the Scorecard tab every quarter
 • Read every event card carefully — the response options guide you
-• Tap the ❓ button anytime for help",
+• Tap the ❓ button anytime for help`,
       color: T.gold,
     },
   ];
