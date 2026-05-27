@@ -1890,57 +1890,230 @@ const QUIZ_QUESTIONS = [
 ];
 
 // ── CERTIFICATE COMPONENT ─────────────────────────────────────────────────────
-function Certificate({ playerName, score, industry, moatType, passCount, quizScore, onShare }) {
+function Certificate({ playerName, score, industry, moatType, passCount, quizScore, certRef }) {
   const date = new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
-  const code = `MA-${Date.now().toString(36).toUpperCase().slice(-6)}`
+  const code = React.useRef(`MA-${Date.now().toString(36).toUpperCase().slice(-6)}`).current
   const tierColor = score.stars >= 4 ? T.gold : score.stars >= 3 ? T.green : score.stars >= 2 ? T.orange : T.red
   const ind = INDUSTRIES.find(i => i.id === industry)
   const moat = MOAT_TYPES[moatType]
+  const starsFilled = '★'.repeat(score.stars) + '☆'.repeat(5 - score.stars)
 
-  return React.createElement('div', { style: { background: 'linear-gradient(135deg, #0D1627 0%, #111D35 50%, #0D1627 100%)', border: `2px solid ${T.gold}44`, borderRadius: 20, padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden' } },
-    React.createElement('div', { style: { position: 'absolute', top: 0, right: 0, width: 80, height: 80, background: `${T.gold}08`, borderBottomLeftRadius: 80 } }),
-    React.createElement('div', { style: { position: 'absolute', bottom: 0, left: 0, width: 60, height: 60, background: `${T.cyan}08`, borderTopRightRadius: 60 } }),
-    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
-      React.createElement('div', { style: { fontSize: 32 } }, '🏛️'),
-      React.createElement('div', { style: { fontSize: 10, color: T.gold, textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 } }, 'Certificate of Achievement'),
-      React.createElement('div', { style: { width: 60, height: 1, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`, margin: '8px auto' } })
+  return React.createElement('div', {
+    ref: certRef,
+    style: {
+      background: 'linear-gradient(135deg, #0D1627 0%, #111D35 50%, #0D1627 100%)',
+      border: `2px solid ${T.gold}`,
+      borderRadius: 20,
+      padding: 28,
+      marginBottom: 16,
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: "'Inter', sans-serif",
+    }
+  },
+    // Background decorations
+    React.createElement('div', { style: { position: 'absolute', top: 0, right: 0, width: 100, height: 100, background: `${T.gold}12`, borderBottomLeftRadius: 100 } }),
+    React.createElement('div', { style: { position: 'absolute', bottom: 0, left: 0, width: 80, height: 80, background: `${T.cyan}10`, borderTopRightRadius: 80 } }),
+    React.createElement('div', { style: { position: 'absolute', top: '40%', right: -30, width: 120, height: 120, border: `1px solid ${T.gold}15`, borderRadius: '50%' } }),
+
+    // Header
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+      React.createElement('div', { style: { fontSize: 40 } }, '🏛️'),
+      React.createElement('div', { style: { fontSize: 11, color: T.gold, textTransform: 'uppercase', letterSpacing: 4, marginTop: 6, fontWeight: 700 } }, 'Certificate of Achievement'),
+      React.createElement('div', { style: { width: 80, height: 2, background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`, margin: '10px auto' } })
     ),
-    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16 } },
-      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginBottom: 4 } }, 'This certifies that'),
-      React.createElement('div', { style: { fontSize: 22, fontWeight: 900, color: T.text, letterSpacing: 1 } }, playerName),
-      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 4 } }, 'has successfully completed')
+
+    // Player name
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 18 } },
+      React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', marginBottom: 6, letterSpacing: 1 } }, 'This certifies that'),
+      React.createElement('div', { style: { fontSize: 28, fontWeight: 900, color: '#FFFFFF', letterSpacing: 1, textShadow: `0 0 20px ${T.gold}44` } }, playerName),
+      React.createElement('div', { style: { fontSize: 12, color: '#8a9ab5', marginTop: 6, letterSpacing: 1 } }, 'has successfully completed')
     ),
-    React.createElement('div', { style: { textAlign: 'center', marginBottom: 16, background: `${T.gold}10`, borderRadius: 12, padding: 12, border: `1px solid ${T.gold}33` } },
-      React.createElement('div', { style: { fontSize: 15, fontWeight: 800, color: T.gold } }, 'Market Architects'),
-      React.createElement('div', { style: { fontSize: 11, color: T.muted, marginTop: 2 } }, 'Value Investing Simulation — Level 1'),
-      React.createElement('div', { style: { fontSize: 11, color: T.cyan, marginTop: 4 } }, `${ind?.emoji} ${ind?.name} · ${moat?.emoji} ${moat?.name}`)
+
+    // Course name box
+    React.createElement('div', { style: { textAlign: 'center', marginBottom: 18, background: `${T.gold}12`, borderRadius: 14, padding: '14px 16px', border: `1px solid ${T.gold}44` } },
+      React.createElement('div', { style: { fontSize: 18, fontWeight: 900, color: T.gold, letterSpacing: 1 } }, 'Market Architects'),
+      React.createElement('div', { style: { fontSize: 11, color: '#8a9ab5', marginTop: 4 } }, 'Value Investing Simulation — Level 1'),
+      React.createElement('div', { style: { fontSize: 12, color: T.cyan, marginTop: 8, fontWeight: 600 } },
+        `${ind?.emoji || ''} ${ind?.name || industry}  ·  ${moat?.emoji || ''} ${moat?.name || moatType}`
+      )
     ),
-    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 } },
+
+    // Score grid
+    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 18 } },
       [
         { label: 'IPO Result', value: score.tier, color: tierColor },
         { label: 'Criteria', value: `${passCount}/7`, color: passCount === 7 ? T.green : T.orange },
         { label: 'Quiz Score', value: `${quizScore}/20`, color: quizScore >= 15 ? T.green : quizScore >= 10 ? T.gold : T.orange },
       ].map(({ label, value, color }) =>
-        React.createElement('div', { key: label, style: { textAlign: 'center', background: T.surface, borderRadius: 10, padding: '10px 6px' } },
-          React.createElement('div', { style: { fontSize: 13, fontWeight: 900, color } }, value),
-          React.createElement('div', { style: { fontSize: 9, color: T.muted, marginTop: 2 } }, label)
+        React.createElement('div', { key: label, style: { textAlign: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '12px 6px', border: `1px solid rgba(255,255,255,0.08)` } },
+          React.createElement('div', { style: { fontSize: 14, fontWeight: 900, color } }, value),
+          React.createElement('div', { style: { fontSize: 9, color: '#8a9ab5', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 } }, label)
         )
       )
     ),
-    React.createElement('div', { style: { textAlign: 'center', marginBottom: 12 } },
-      React.createElement(Stars, { count: score.stars })
-    ),
-    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${T.border}`, paddingTop: 12 } },
+
+    // Stars
+    React.createElement('div', { style: { textAlign: 'center', fontSize: 22, color: T.gold, marginBottom: 18, letterSpacing: 4 } }, starsFilled),
+
+    // Footer divider
+    React.createElement('div', { style: { height: 1, background: `linear-gradient(90deg, transparent, ${T.gold}44, transparent)`, marginBottom: 14 } }),
+
+    // Footer
+    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
       React.createElement('div', null,
-        React.createElement('div', { style: { fontSize: 9, color: T.muted } }, date),
-        React.createElement('div', { style: { fontSize: 9, color: T.muted, marginTop: 2 } }, `Verification: ${code}`)
+        React.createElement('div', { style: { fontSize: 10, color: '#8a9ab5' } }, date),
+        React.createElement('div', { style: { fontSize: 10, color: '#8a9ab5', marginTop: 3 } }, `Verification: ${code}`)
       ),
       React.createElement('div', { style: { textAlign: 'right' } },
-        React.createElement('div', { style: { fontSize: 9, color: T.gold, fontWeight: 700 } }, 'MARKET ARCHITECTS'),
-        React.createElement('div', { style: { fontSize: 9, color: T.muted } }, 'In partnership with Markets4you')
+        React.createElement('div', { style: { fontSize: 10, color: T.gold, fontWeight: 800, letterSpacing: 1 } }, 'MARKET ARCHITECTS'),
+        React.createElement('div', { style: { fontSize: 10, color: '#8a9ab5', marginTop: 3 } }, 'In partnership with Markets4you')
       )
-    ),
-    React.createElement('button', { onClick: onShare, style: { ...css.btn(T.cyan), marginTop: 12, fontSize: 12 } }, '📤 Share Certificate')
+    )
+  )
+}
+
+// ── CERTIFICATE PHASE COMPONENT ───────────────────────────────────────────────
+function CertificatePhase({ playerName, score, gameState, passCount, quizScore, onConvert, onPlayAgain }) {
+  const certRef = React.useRef(null)
+  const [loading, setLoading] = React.useState(false)
+  const [status, setStatus] = React.useState('')
+
+  async function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+      const s = document.createElement('script')
+      s.src = src
+      s.onload = resolve
+      s.onerror = reject
+      document.head.appendChild(s)
+    })
+  }
+
+  async function captureCanvas() {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+    const el = certRef.current
+    if (!el) throw new Error('Certificate element not found')
+    const canvas = await window.html2canvas(el, {
+      backgroundColor: '#0D1627',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    })
+    return canvas
+  }
+
+  async function handleDownloadPDF() {
+    try {
+      setLoading(true)
+      setStatus('Preparing certificate...')
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      setStatus('Capturing design...')
+      const canvas = await captureCanvas()
+      setStatus('Generating PDF...')
+      const { jsPDF } = window.jspdf
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pageW = pdf.internal.pageSize.getWidth()
+      const pageH = pdf.internal.pageSize.getHeight()
+      const imgW = pageW - 20
+      const imgH = (canvas.height * imgW) / canvas.width
+      const y = (pageH - imgH) / 2
+      pdf.setFillColor(13, 22, 39)
+      pdf.rect(0, 0, pageW, pageH, 'F')
+      pdf.addImage(imgData, 'PNG', 10, y, imgW, imgH)
+      pdf.save(`Market-Architects-Certificate-${playerName}.pdf`)
+      setStatus('')
+    } catch (e) {
+      setStatus('Download failed — try again')
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleShareImage() {
+    try {
+      setLoading(true)
+      setStatus('Capturing certificate...')
+      const canvas = await captureCanvas()
+      setStatus('Preparing to share...')
+      canvas.toBlob(async (blob) => {
+        if (!blob) { setStatus('Could not capture image'); setLoading(false); return }
+        const file = new File([blob], 'market-architects-certificate.png', { type: 'image/png' })
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Market Architects Certificate',
+            text: `I just completed Market Architects and earned my Value Investing certificate!\n\nResult: ${score.tier} · Quiz: ${quizScore}/20\n\nPlay at: marketarchitect.netlify.app`,
+          })
+          setStatus('')
+        } else {
+          // Fallback — download image
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `Market-Architects-Certificate-${playerName}.png`
+          a.click()
+          URL.revokeObjectURL(url)
+          setStatus('Image saved — share it from your gallery!')
+        }
+        setLoading(false)
+      }, 'image/png')
+    } catch (e) {
+      setStatus('Share failed — try download instead')
+      setLoading(false)
+      console.error(e)
+    }
+  }
+
+  return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
+    React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
+      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
+        React.createElement('div', { style: { fontSize: 20, fontWeight: 900, color: T.gold } }, '🎓 Your Certificate'),
+        React.createElement('div', { style: { fontSize: 12, color: T.muted, marginTop: 4 } },
+          `Quiz Score: ${quizScore}/${QUIZ_QUESTIONS.length} · ${Math.round((quizScore / QUIZ_QUESTIONS.length) * 100)}%`
+        )
+      ),
+
+      // The actual certificate (captured by html2canvas)
+      React.createElement(Certificate, {
+        certRef,
+        playerName: playerName || gameState.name || 'Player',
+        score,
+        industry: gameState.industry,
+        moatType: gameState.moatType,
+        passCount,
+        quizScore,
+      }),
+
+      // Status message
+      status ? React.createElement('div', { style: { textAlign: 'center', fontSize: 12, color: T.cyan, marginBottom: 12, padding: 10, background: `${T.cyan}10`, borderRadius: 10 } }, status) : null,
+
+      // Action buttons
+      React.createElement('div', { style: { display: 'flex', gap: 10, marginBottom: 12 } },
+        React.createElement('button', {
+          onClick: handleShareImage,
+          disabled: loading,
+          style: { ...css.btn(T.cyan), flex: 1, padding: 14, fontSize: 13, opacity: loading ? 0.6 : 1 }
+        }, loading ? '⏳ Working...' : '📤 Share Image'),
+        React.createElement('button', {
+          onClick: handleDownloadPDF,
+          disabled: loading,
+          style: { ...css.btn(T.gold), flex: 1, padding: 14, fontSize: 13, opacity: loading ? 0.6 : 1 }
+        }, loading ? '⏳ Working...' : '📄 Download PDF')
+      ),
+
+      React.createElement('button', {
+        onClick: onConvert,
+        style: { ...css.btn(T.green), padding: 14, fontSize: 15, marginBottom: 12 }
+      }, '💰 Apply What You Learned →'),
+
+      React.createElement('button', {
+        onClick: onPlayAgain,
+        style: { ...css.btn(T.muted), padding: 12, fontSize: 13 }
+      }, '🔄 Play Again')
+    )
   )
 }
 
@@ -2060,17 +2233,11 @@ function ResultsScreen({ gameState, playerName }) {
   }
 
   // CERTIFICATE PHASE
-  if (phase === 'certificate') return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
-    React.createElement('div', { style: { maxWidth: 400, margin: '0 auto' } },
-      React.createElement('div', { style: { textAlign: 'center', marginBottom: 20 } },
-        React.createElement('div', { style: { fontSize: 20, fontWeight: 900, color: T.gold } }, '🎓 Your Certificate'),
-        React.createElement('div', { style: { fontSize: 12, color: T.muted, marginTop: 4 } }, `Quiz Score: ${quizScore}/${QUIZ_QUESTIONS.length} · ${Math.round((quizScore / QUIZ_QUESTIONS.length) * 100)}%`)
-      ),
-      React.createElement(Certificate, { playerName: playerName || gameState.name || 'Player', score, industry: gameState.industry, moatType: gameState.moatType, passCount, quizScore, onShare: handleShare }),
-      React.createElement('button', { onClick: () => setPhase('convert'), style: { ...css.btn(T.gold), padding: 14, fontSize: 15, marginBottom: 12 } }, '💰 Apply What You Learned →'),
-      React.createElement('button', { onClick: playAgain, style: { ...css.btn(T.muted), padding: 12, fontSize: 13 } }, '🔄 Play Again')
-    )
-  )
+  if (phase === 'certificate') {
+    return React.createElement(CertificatePhase, {
+      playerName, score, gameState, passCount, quizScore, onConvert: () => setPhase('convert'), onPlayAgain: playAgain
+    })
+  }
 
   // CONVERSION PHASE
   if (phase === 'convert') return React.createElement('div', { style: { background: T.bg, minHeight: '100vh', padding: 20, fontFamily: "'Inter',sans-serif" } },
@@ -2108,7 +2275,7 @@ function ResultsScreen({ gameState, playerName }) {
           React.createElement('div', { key: i, style: { fontSize: 12, color: T.text, padding: '4px 0' } }, item)
         ),
         React.createElement('a', {
-          href: 'https://my.markets4you.com/links/go/7026',
+          href: 'https://www.markets4you.online/?affid=bl97twp',
           target: '_blank',
           rel: 'noopener noreferrer',
           style: { display: 'block', marginTop: 16, padding: 16, background: T.gold, borderRadius: 12, color: '#000', fontWeight: 900, fontSize: 15, textAlign: 'center', textDecoration: 'none' }
